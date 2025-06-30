@@ -1,0 +1,44 @@
+'use client';
+
+import { Button } from '@/components/ui/button';
+import { ModeToggle } from '@/components/ui/mode-toggle';
+import { Mic, Brain, FileText, Settings } from 'lucide-react';
+
+export function Header() {
+  return (
+    <header className="sticky top-0 z-50 w-full border-b border-slate-200/50 dark:border-slate-700/50 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+      <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
+              <Mic className="w-4 h-4 text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                VoiceFlow AI
+              </h1>
+            </div>
+          </div>
+        </div>
+
+        <nav className="hidden md:flex items-center space-x-1">
+          <Button variant="ghost" size="sm" className="text-slate-600 dark:text-slate-300">
+            <Brain className="w-4 h-4 mr-2" />
+            Analytics
+          </Button>
+          <Button variant="ghost" size="sm" className="text-slate-600 dark:text-slate-300">
+            <FileText className="w-4 h-4 mr-2" />
+            Export
+          </Button>
+        </nav>
+
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="sm">
+            <Settings className="w-4 h-4" />
+          </Button>
+          <ModeToggle />
+        </div>
+      </div>
+    </header>
+  );
+}
