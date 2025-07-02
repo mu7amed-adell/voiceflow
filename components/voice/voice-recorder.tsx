@@ -16,11 +16,12 @@ import {
   Play,
   Save,
   Trash2,
-  Volume2
+  Volume2,
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
-type RecordingState = 'idle' | 'recording' | 'paused' | 'stopped';
+type RecordingState = 'idle' | 'recording' | 'paused' | 'stopped' | 'uploading';
 
 export function VoiceRecorder() {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
@@ -36,7 +37,7 @@ export function VoiceRecorder() {
   const intervalRef = useRef<number | null>(null);
   const animationRef = useRef<number | null>(null);
 
-  const { addRecording } = useRecordingsStore();
+  const { addRecording, isLoading, error } = useRecordingsStore();
 
   const startRecording = useCallback(async () => {
     try {
@@ -84,6 +85,7 @@ export function VoiceRecorder() {
       mediaRecorderRef.current.start(100);
       setRecordingState('recording');
       setDuration(0);
+      chunksRef.current = [];
       
       // Start timer
       intervalRef.current = window.setInterval(() => {
@@ -162,37 +164,27 @@ export function VoiceRecorder() {
     }
   }, [recordingState]);
 
-  const saveRecording = useCallback(() => {
+  const saveRecording = useCallback(async () => {
     if (chunksRef.current.length > 0) {
-      const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
-      const audioUrl = URL.createObjectURL(audioBlob);
+      setRecordingState('uploading');
       
-      const recording = {
-        id: Date.now().toString(),
-        title: `Recording ${new Date().toLocaleString()}`,
-        duration,
-        createdAt: new Date(),
-        audioUrl,
-        size: audioBlob.size,
-        status: 'processing' as const,
-        transcription: null,
-        summary: null,
-        report: null
-      };
-
-      addRecording(recording);
-      
-      // Simulate processing with delay
-      setTimeout(() => {
-        useRecordingsStore.getState().updateRecordingStatus(recording.id, 'completed');
-      }, 2000);
-      
-      // Reset state
-      chunksRef.current = [];
-      setRecordingState('idle');
-      setDuration(0);
-      
-      toast.success('Recording saved successfully!');
+      try {
+        const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
+        const title = `Recording ${new Date().toLocaleString()}`;
+        
+        await addRecording(audioBlob, title, duration);
+        
+        // Reset state
+        chunksRef.current = [];
+        setRecordingState('idle');
+        setDuration(0);
+        
+        toast.success('Recording saved and processing started!');
+      } catch (error) {
+        console.error('Error saving recording:', error);
+        setRecordingState('stopped');
+        toast.error('Failed to save recording. Please try again.');
+      }
     }
   }, [duration, addRecording]);
 
@@ -223,7 +215,16 @@ export function VoiceRecorder() {
       case 'recording': return 'bg-red-500';
       case 'paused': return 'bg-yellow-500';
       case 'stopped': return 'bg-blue-500';
+      case 'uploading': return 'bg-purple-500';
       default: return 'bg-gray-400';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (recordingState) {
+      case 'uploading': return 'Uploading';
+      case 'idle': return 'Ready';
+      default: return recordingState.charAt(0).toUpperCase() + recordingState.slice(1);
     }
   };
 
@@ -233,12 +234,19 @@ export function VoiceRecorder() {
         <CardTitle className="flex items-center justify-between text-lg">
           <span>Voice Recorder</span>
           <Badge variant="outline" className={`${getStatusColor()} text-white border-transparent`}>
-            {recordingState === 'idle' ? 'Ready' : recordingState.charAt(0).toUpperCase() + recordingState.slice(1)}
+            {getStatusText()}
           </Badge>
         </CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-6">
+        {/* Error Display */}
+        {error && (
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </div>
+        )}
+
         {/* Audio Visualizer */}
         <div className="h-24 bg-slate-50 dark:bg-slate-800 rounded-lg p-4 flex items-center justify-center">
           <AudioVisualizer 
@@ -270,6 +278,7 @@ export function VoiceRecorder() {
           {recordingState === 'idle' && (
             <Button 
               onClick={startRecording}
+              disabled={isLoading}
               className="w-full h-12 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold"
             >
               <Mic className="w-5 h-5 mr-2" />
@@ -322,6 +331,7 @@ export function VoiceRecorder() {
             <div className="flex space-x-2">
               <Button 
                 onClick={saveRecording}
+                disabled={isLoading}
                 className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
               >
                 <Save className="w-5 h-5 mr-2" />
@@ -331,10 +341,21 @@ export function VoiceRecorder() {
                 onClick={discardRecording}
                 variant="destructive"
                 size="lg"
+                disabled={isLoading}
               >
                 <Trash2 className="w-5 h-5" />
               </Button>
             </div>
+          )}
+
+          {recordingState === 'uploading' && (
+            <Button 
+              disabled
+              className="w-full h-12 bg-gradient-to-r from-purple-500 to-purple-600"
+            >
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              Uploading & Processing...
+            </Button>
           )}
         </div>
 
@@ -346,6 +367,7 @@ export function VoiceRecorder() {
               <li>Find a quiet environment</li>
               <li>Speak clearly and at normal pace</li>
               <li>Keep microphone 6-12 inches away</li>
+              <li>Recordings are processed with AI for transcription and analysis</li>
             </ul>
           </div>
         )}

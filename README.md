@@ -1,36 +1,173 @@
-Project Structure Overview
-The project is organized into several logical directories, each serving a specific purpose:
+# VoiceFlow AI - Intelligent Voice Notes
 
-app/: This directory contains the core Next.js application logic, including pages, layouts, and global styles.
+A modern web application for recording, transcribing, and analyzing voice notes using AI. Built with Next.js, Supabase, and OpenAI.
 
-app/layout.tsx: Defines the root layout for the entire application, including global CSS imports, metadata, and the ThemeProvider for dark/light mode.
-app/page.tsx: This is the main entry point for the application's UI, orchestrating the display of the voice recorder, recordings list, and recording details. It uses client-side hooks and the use client directive.
-app/globals.css: Contains the global CSS styles, including Tailwind CSS directives and custom CSS variables for theming.
-components/: This directory houses all the reusable React components, categorized further by their functionality.
+## Features
 
-components/layout/: Contains layout-specific components, such as the Header.
-components/recordings/: Includes components related to displaying and interacting with recordings, such as AudioPlayer, RecordingCard, RecordingDetail, RecordingsList, ReportView, SummaryView, and TranscriptionView.
-components/ui/: This directory is for UI components generated or customized using shadcn/ui. Examples include Button, Card, Slider, Badge, Progress, Tabs, etc.
-components/voice/: Contains components specific to voice recording functionality, like AudioVisualizer, VoiceRecorder, and VolumeIndicator.
-components/theme-provider.tsx: A wrapper component for next-themes to manage theme switching.
-lib/: This directory contains utility functions, type definitions, and state management logic.
+- **Voice Recording**: High-quality audio recording with real-time visualization
+- **AI Transcription**: Automatic speech-to-text using OpenAI Whisper
+- **Smart Summarization**: AI-generated summaries with key points and topics
+- **Detailed Analysis**: Communication analysis with insights and recommendations
+- **Real-time Processing**: Background AI processing with status updates
+- **Modern UI**: Beautiful, responsive interface with dark/light mode support
 
-lib/store/recordings-store.ts: Implements a Zustand store for managing the application's state related to recordings (adding, deleting, updating status). It also includes mock data for demonstration purposes and uses zustand/middleware/persist for local storage.
-lib/types/recording.ts: Defines TypeScript interfaces for the Recording object and its nested Transcription, Summary, and Report types, ensuring strong typing throughout the application.
-lib/utils/format.ts: Provides helper functions for formatting durations, file sizes, and relative times.
-lib/utils.ts: Contains general utility functions, including cn for conditionally combining Tailwind CSS classes.
-Key Technologies and Libraries
-Next.js: The React framework for building the web application, supporting server-side rendering and client-side interactivity.
-Tailwind CSS: A utility-first CSS framework used for rapid UI development and styling.
-shadcn/ui: A collection of reusable UI components built with Radix UI and Tailwind CSS, providing a consistent and customizable design system.
-Zustand: A lightweight state management solution used for managing the client-side state of recordings.
-Lucide React: An icon library providing a wide range of customizable SVG icons used across the application.
-Sonner: A toast library for displaying notifications to the user.
-next-themes: A library for managing dark/light mode themes.
-Application Flow
-The application's main page (app/page.tsx) sets up a three-column layout:
+## Tech Stack
 
-Left Column: Features the VoiceRecorder component, allowing users to record audio.
-Middle Column: Displays the RecordingsList, where users can view and filter their saved recordings.
-Right Column: Shows the RecordingDetail component, which provides an AudioPlayer and tabs for viewing the transcription, summary, and analysis report of a selected recording.
-The useRecordingsStore (Zustand) manages the state of all recordings, including their status (processing, completed, failed), and their associated data (audio URL, transcription, summary, report).
+- **Frontend**: Next.js 13, React, TypeScript, Tailwind CSS
+- **UI Components**: shadcn/ui, Radix UI
+- **Backend**: Next.js API Routes
+- **Database**: Supabase (PostgreSQL)
+- **Storage**: Supabase Storage
+- **AI Services**: OpenAI (Whisper, GPT-4)
+- **State Management**: Zustand
+- **Icons**: Lucide React
+
+## Project Structure
+
+```
+├── app/                          # Next.js app directory
+│   ├── api/                      # API routes
+│   │   ├── upload-recording/     # Audio upload and processing
+│   │   └── recordings/           # CRUD operations for recordings
+│   ├── layout.tsx                # Root layout with theme provider
+│   ├── page.tsx                  # Main application page
+│   └── globals.css               # Global styles and CSS variables
+├── components/                   # React components
+│   ├── layout/                   # Layout components (Header)
+│   ├── recordings/               # Recording-related components
+│   ├── voice/                    # Voice recording components
+│   ├── ui/                       # shadcn/ui components
+│   └── theme-provider.tsx        # Theme management
+├── lib/                          # Utilities and services
+│   ├── services/                 # External service integrations
+│   │   └── openai.ts            # OpenAI API integration
+│   ├── supabase/                # Supabase configuration
+│   ├── store/                   # State management
+│   ├── types/                   # TypeScript type definitions
+│   └── utils/                   # Utility functions
+└── supabase/                    # Database migrations
+    └── migrations/              # SQL migration files
+```
+
+## Setup Instructions
+
+### 1. Prerequisites
+
+- Node.js 18+ and npm
+- Supabase account
+- OpenAI account with API access
+
+### 2. Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```env
+# Supabase Configuration
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# OpenAI Configuration
+OPENAI_API_KEY=your_openai_api_key
+
+# Application Configuration
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+### 3. Supabase Setup
+
+1. **Create a new Supabase project** at [supabase.com](https://supabase.com)
+
+2. **Set up the database**:
+   - Go to the SQL Editor in your Supabase dashboard
+   - Run the migration file: `supabase/migrations/create_recordings_table.sql`
+
+3. **Configure Storage**:
+   - Go to Storage in your Supabase dashboard
+   - Create a new bucket named `audio-recordings`
+   - Set the bucket to public or configure appropriate policies
+
+4. **Get your credentials**:
+   - Go to Settings > API
+   - Copy your Project URL and anon key
+   - Copy your service role key (keep this secret!)
+
+### 4. OpenAI Setup
+
+1. **Get an API key**:
+   - Sign up at [platform.openai.com](https://platform.openai.com)
+   - Go to API Keys and create a new key
+   - Add credits to your account for API usage
+
+### 5. Installation
+
+```bash
+# Clone the repository
+git clone <repository-url>
+cd voiceflow-ai
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+```
+
+### 6. Usage
+
+1. Open [http://localhost:3000](http://localhost:3000) in your browser
+2. Click "Start Recording" to begin recording audio
+3. Speak clearly into your microphone
+4. Click "Stop" when finished, then "Save Recording"
+5. The recording will be uploaded and processed automatically
+6. View transcription, summary, and analysis in the interface
+
+## API Endpoints
+
+- `POST /api/upload-recording` - Upload and process audio recordings
+- `GET /api/recordings` - Fetch all recordings
+- `GET /api/recordings/[id]` - Fetch specific recording
+- `DELETE /api/recordings/[id]` - Delete recording
+
+## Key Features Explained
+
+### Voice Recording
+- Real-time audio visualization
+- Pause/resume functionality
+- Audio level monitoring
+- WebM format with Opus codec
+
+### AI Processing Pipeline
+1. **Upload**: Audio file uploaded to Supabase Storage
+2. **Transcription**: OpenAI Whisper converts speech to text
+3. **Summarization**: GPT-4 generates summary and key points
+4. **Analysis**: Detailed communication analysis and insights
+5. **Storage**: All results saved to Supabase database
+
+### Real-time Updates
+- Background processing with status polling
+- Live status updates in the UI
+- Error handling and retry logic
+
+## Deployment
+
+The application can be deployed to any platform that supports Next.js:
+
+- **Vercel** (recommended for Next.js)
+- **Netlify**
+- **Railway**
+- **DigitalOcean App Platform**
+
+Make sure to set all environment variables in your deployment platform.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+MIT License - see LICENSE file for details

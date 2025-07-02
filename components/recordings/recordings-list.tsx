@@ -13,7 +13,8 @@ import {
   Calendar,
   Clock,
   SortAsc,
-  SortDesc
+  SortDesc,
+  RefreshCw
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -35,7 +36,20 @@ export function RecordingsList({ onSelectRecording, selectedRecording }: Recordi
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [filterBy, setFilterBy] = useState<FilterOption>('all');
   
-  const { recordings, _hasHydrated } = useRecordingsStore();
+  const { 
+    recordings, 
+    _hasHydrated, 
+    isLoading, 
+    error, 
+    fetchRecordings 
+  } = useRecordingsStore();
+
+  // Fetch recordings on mount and when hydrated
+  useEffect(() => {
+    if (_hasHydrated) {
+      fetchRecordings();
+    }
+  }, [_hasHydrated, fetchRecordings]);
 
   // Filter and sort recordings
   const filteredRecordings = recordings
@@ -71,18 +85,38 @@ export function RecordingsList({ onSelectRecording, selectedRecording }: Recordi
     failed: recordings.filter(r => r.status === 'failed').length,
   };
 
-  // Use initial recordings count until hydrated to prevent hydration mismatch
-  const displayCount = _hasHydrated ? filteredRecordings.length : recordings.length;
+  const displayCount = _hasHydrated ? filteredRecordings.length : 0;
+
+  const handleRefresh = () => {
+    fetchRecordings();
+  };
 
   return (
     <Card className="h-full bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50">
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between text-lg">
           <span>Recordings</span>
-          <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
-            {displayCount}
-          </Badge>
+          <div className="flex items-center space-x-2">
+            <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+              {displayCount}
+            </Badge>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+            </Button>
+          </div>
         </CardTitle>
+        
+        {/* Error Display */}
+        {error && (
+          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </div>
+        )}
         
         {/* Search and Filters */}
         <div className="space-y-3">
@@ -152,17 +186,14 @@ export function RecordingsList({ onSelectRecording, selectedRecording }: Recordi
       
       <CardContent className="p-0">
         <div className="max-h-[600px] overflow-y-auto">
-          {!_hasHydrated ? (
-            // Show initial recordings during hydration to match server render
-            <div className="space-y-2 p-4">
-              {recordings.map((recording) => (
-                <RecordingCard
-                  key={recording.id}
-                  recording={recording}
-                  isSelected={selectedRecording === recording.id}
-                  onClick={() => onSelectRecording(recording.id)}
-                />
-              ))}
+          {isLoading && recordings.length === 0 ? (
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+              <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
+              <p className="font-medium">Loading recordings...</p>
+            </div>
+          ) : !_hasHydrated ? (
+            <div className="p-8 text-center text-slate-500 dark:text-slate-400">
+              <p className="font-medium">Initializing...</p>
             </div>
           ) : filteredRecordings.length === 0 ? (
             <div className="p-8 text-center text-slate-500 dark:text-slate-400">
