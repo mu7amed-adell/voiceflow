@@ -73,8 +73,28 @@ OPENAI_API_KEY=your_openai_api_key
 # Application Configuration
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
+### 3. Installation
 
-### 3. Supabase Setup
+```bash
+# Clone the repository
+git clone https://github.com/mu7amed-adell/voiceflow.git
+cd voiceflow
+
+# Install dependencies
+npm install
+
+# Run the development server
+npm run dev
+```
+
+### 4. OpenAI Setup
+
+1. **Get an API key**:
+   - Sign up at [platform.openai.com](https://platform.openai.com)
+   - Go to API Keys and create a new key
+   - Add credits to your account for API usage
+
+### 5. Supabase Setup (follow steps at [localhost:3000/setup)](http://localhost:3000/setup))
 
 1. **Create a new Supabase project** at [supabase.com](https://supabase.com)
 
@@ -91,28 +111,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
    - Go to Settings > API
    - Copy your Project URL and anon key
    - Copy your service role key (keep this secret!)
-
-### 4. OpenAI Setup
-
-1. **Get an API key**:
-   - Sign up at [platform.openai.com](https://platform.openai.com)
-   - Go to API Keys and create a new key
-   - Add credits to your account for API usage
-
-### 5. Installation
-
-```bash
-# Clone the repository
-git clone <repository-url>
-cd voiceflow-ai
-
-# Install dependencies
-npm install
-
-# Run the development server
-npm run dev
-```
-
+     
 ### 6. Usage
 
 1. Open [http://localhost:3000](http://localhost:3000) in your browser
