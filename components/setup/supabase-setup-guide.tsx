@@ -14,7 +14,8 @@ import {
   Settings,
   Key,
   Upload,
-  Play
+  Play,
+  Terminal
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -211,7 +212,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000`;
             <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
               <p className="text-sm text-yellow-800 dark:text-yellow-200">
                 <AlertCircle className="w-4 h-4 inline mr-1" />
-                Replace the placeholder values with your actual Supabase credentials
+                Replace the placeholder values with your actual Supabase credentials and OpenAI API key
               </p>
             </div>
           </div>
@@ -328,10 +329,10 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000`;
     <div className="max-w-4xl mx-auto p-6 space-y-6">
       <div className="text-center space-y-2">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-          Supabase Setup Guide
+          VoiceFlow AI Setup Guide
         </h1>
         <p className="text-slate-600 dark:text-slate-300">
-          Let's connect your VoiceFlow AI app to Supabase for real data storage and AI processing
+          Let's connect your VoiceFlow AI app to Supabase and OpenAI for real data storage and AI processing
         </p>
       </div>
 
@@ -436,7 +437,10 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000`;
       {/* Quick Commands */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Quick Commands</CardTitle>
+          <CardTitle className="text-lg flex items-center">
+            <Terminal className="w-5 h-5 mr-2" />
+            Quick Commands
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -451,6 +455,41 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000`;
               <code className="block text-xs bg-slate-900 text-slate-100 p-2 rounded">
                 npm run setup:supabase
               </code>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Test Backend</p>
+              <code className="block text-xs bg-slate-900 text-slate-100 p-2 rounded">
+                npm run test:backend
+              </code>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Complete Setup</p>
+              <code className="block text-xs bg-slate-900 text-slate-100 p-2 rounded">
+                npm run setup
+              </code>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* OpenAI Setup Note */}
+      <Card className="border-orange-200 dark:border-orange-800">
+        <CardHeader>
+          <CardTitle className="text-lg flex items-center text-orange-600 dark:text-orange-400">
+            <AlertCircle className="w-5 h-5 mr-2" />
+            OpenAI API Setup
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <p className="text-sm text-slate-600 dark:text-slate-300">
+              Don't forget to set up your OpenAI API key for AI processing:
+            </p>
+            <div className="space-y-2">
+              <p className="text-sm">1. Go to <a href="https://platform.openai.com" target="_blank" className="text-blue-500 hover:underline">platform.openai.com</a></p>
+              <p className="text-sm">2. Create an account and add billing information</p>
+              <p className="text-sm">3. Generate an API key in the API Keys section</p>
+              <p className="text-sm">4. Add it to your .env.local file as OPENAI_API_KEY</p>
             </div>
           </div>
         </CardContent>

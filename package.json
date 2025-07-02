@@ -9,7 +9,9 @@
     "lint": "next lint",
     "setup:env": "node scripts/check-env.js",
     "setup:supabase": "node scripts/setup-supabase.js",
-    "setup": "npm run setup:env && npm run setup:supabase"
+    "setup": "npm run setup:env && npm run setup:supabase",
+    "test:backend": "node scripts/test-backend.js",
+    "verify": "npm run setup:env && npm run test:backend"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

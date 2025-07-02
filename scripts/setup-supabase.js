@@ -11,7 +11,14 @@ const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.error('❌ Missing Supabase credentials in .env.local');
-  console.log('Please add your Supabase URL and Service Role Key to .env.local');
+  console.log('\n📋 Setup Instructions:');
+  console.log('1. Create a .env.local file in your project root');
+  console.log('2. Add your Supabase credentials:');
+  console.log('\nNEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url');
+  console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key');
+  console.log('SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key');
+  console.log('OPENAI_API_KEY=your_openai_api_key');
+  console.log('\n3. Get these values from your Supabase dashboard → Settings → API');
   process.exit(1);
 }
 
@@ -146,6 +153,7 @@ async function setupSupabase() {
       console.log('   □ Run the migration SQL in your Supabase SQL Editor');
       console.log('   □ Add your credentials to .env.local');
       console.log('   □ Create storage bucket named "audio-recordings"');
+      console.log('\n🔗 Visit /setup for a detailed setup guide');
       return;
     }
     
@@ -195,6 +203,7 @@ async function setupSupabase() {
 
   } catch (error) {
     console.error('❌ Setup failed:', error.message);
+    console.log('\n🔗 Visit /setup for a detailed setup guide');
   }
 }
 
