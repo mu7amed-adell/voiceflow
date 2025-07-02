@@ -77,7 +77,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 ```bash
 # Clone the repository
-git clone [<repository-url>](https://github.com/mu7amed-adell/voiceflow.git)
+git clone https://github.com/mu7amed-adell/voiceflow.git
 cd voiceflow
 
 # Install dependencies
