@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/ui/mode-toggle';
-import { Mic, Brain, FileText, Settings } from 'lucide-react';
+import { Bot, Brain, FileText, Settings } from 'lucide-react';
 
 export function Header() {
   return (
@@ -10,16 +10,14 @@ export function Header() {
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center">
-              <Mic className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                VoiceFlow AI
-              </h1>
-            </div>
+              <Bot className="w-8 h-12 text-white" />
+          <div>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              VoiceFlow AI - DMS
+            </h1>
           </div>
         </div>
+      </div>
 
         <nav className="hidden md:flex items-center space-x-1">
           <Button variant="ghost" size="sm" className="text-slate-600 dark:text-slate-300">

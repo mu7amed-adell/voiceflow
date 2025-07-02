@@ -144,7 +144,7 @@ export function AudioPlayer({ audioUrl }: AudioPlayerProps) {
           
           <Button 
             onClick={togglePlayPause}
-            className="w-10 h-10 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
+            className="w-50 h-50 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
           >
             {isPlaying ? (
               <Pause className="w-5 h-5" />

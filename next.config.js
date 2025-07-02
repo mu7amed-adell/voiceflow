@@ -58,9 +58,8 @@ const nextConfig = {
   },
 
   // Experimental features for better performance
-  experimental: {
-    serverComponentsExternalPackages: ['@supabase/supabase-js'],
-  },
+serverExternalPackages: ['@supabase/supabase-js'],
+
 };
 
 module.exports = nextConfig;
