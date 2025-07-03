@@ -2,7 +2,7 @@
  * Environment Variables Checker
  * Validates that all required environment variables are set
  */
-
+require('dotenv').config({ path: '../.env.local' });
 function checkEnvironmentVariables() {
   console.log('🔍 Checking environment variables...\n');
 

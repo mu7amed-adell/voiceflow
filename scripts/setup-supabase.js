@@ -3,6 +3,7 @@
  * This script helps you set up your Supabase project and add sample data
  */
 
+require('dotenv').config({ path: '../.env.local' });
 const { createClient } = require('@supabase/supabase-js');
 
 // You'll need to replace these with your actual Supabase credentials
