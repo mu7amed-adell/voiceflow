@@ -1,19 +1,18 @@
 /**
  * Backend Testing Script
- * Tests the complete audio processing pipeline
+ * Tests the complete audio processing pipeline including AI providers
  */
 require('dotenv').config({ path: '../.env.local' });
 const { createClient } = require('@supabase/supabase-js');
-const fs = require('fs');
-const path = require('path');
+const { checkOllamaConnection } = require('./check-ollama-server');
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY || !OPENAI_API_KEY) {
-  console.error('❌ Missing required environment variables');
-  console.log('Please ensure all environment variables are set in .env.local');
+if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
+  console.error('❌ Missing required Supabase environment variables');
+  console.log('Please ensure SUPABASE credentials are set in .env.local');
   process.exit(1);
 }
 
@@ -22,6 +21,15 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 async function testBackend() {
   console.log('🧪 Testing Backend Architecture...\n');
 
+  const results = {
+    database: false,
+    storage: false,
+    api: false,
+    openai: false,
+    ollama: false,
+    dataFlow: false
+  };
+
   try {
     // Test 1: Database Connection
     console.log('1. Testing database connection...');
@@ -29,9 +37,10 @@ async function testBackend() {
     
     if (error) {
       console.error('❌ Database connection failed:', error.message);
-      return false;
+    } else {
+      console.log('✅ Database connection successful');
+      results.database = true;
     }
-    console.log('✅ Database connection successful');
 
     // Test 2: Storage Connection
     console.log('\n2. Testing storage connection...');
@@ -39,25 +48,24 @@ async function testBackend() {
     
     if (storageError) {
       console.error('❌ Storage connection failed:', storageError.message);
-      return false;
-    }
-    
-    const audioBucket = buckets.find(bucket => bucket.name === 'audio-recordings');
-    if (!audioBucket) {
-      console.log('⚠️  Audio recordings bucket not found');
-      console.log('   Create bucket "audio-recordings" in Supabase dashboard');
     } else {
-      console.log('✅ Storage connection successful');
+      const audioBucket = buckets.find(bucket => bucket.name === 'audio-recordings');
+      if (!audioBucket) {
+        console.log('⚠️  Audio recordings bucket not found');
+        console.log('   Create bucket "audio-recordings" in Supabase dashboard');
+      } else {
+        console.log('✅ Storage connection successful');
+        results.storage = true;
+      }
     }
 
     // Test 3: API Endpoints
     console.log('\n3. Testing API endpoints...');
-    
-    // Test recordings endpoint
     try {
       const response = await fetch('http://localhost:3000/api/recordings');
       if (response.ok) {
         console.log('✅ Recordings API endpoint working');
+        results.api = true;
       } else {
         console.log('⚠️  Recordings API endpoint not responding (server may not be running)');
       }
@@ -68,27 +76,37 @@ async function testBackend() {
 
     // Test 4: OpenAI Connection
     console.log('\n4. Testing OpenAI connection...');
-    try {
-      const OpenAI = require('openai');
-      const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
-      
-      // Test with a simple completion
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-3.5-turbo',
-        messages: [{ role: 'user', content: 'Hello' }],
-        max_tokens: 5
-      });
-      
-      if (completion.choices[0].message.content) {
-        console.log('✅ OpenAI connection successful');
+    if (OPENAI_API_KEY) {
+      try {
+        const OpenAI = require('openai');
+        const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+        
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-3.5-turbo',
+          messages: [{ role: 'user', content: 'Hello' }],
+          max_tokens: 5
+        });
+        
+        if (completion.choices[0].message.content) {
+          console.log('✅ OpenAI connection successful');
+          results.openai = true;
+        }
+      } catch (error) {
+        console.error('❌ OpenAI connection failed:', error.message);
+        console.log('   Check your OPENAI_API_KEY and account credits');
       }
-    } catch (error) {
-      console.error('❌ OpenAI connection failed:', error.message);
-      console.log('   Check your OPENAI_API_KEY and account credits');
+    } else {
+      console.log('⚠️  OpenAI API key not configured');
+      console.log('   Add OPENAI_API_KEY to .env.local for cloud AI');
     }
 
-    // Test 5: Data Flow
-    console.log('\n5. Testing data flow...');
+    // Test 5: Ollama Connection
+    console.log('\n5. Testing Ollama connection...');
+    const ollamaResult = await checkOllamaConnection();
+    results.ollama = ollamaResult.available;
+
+    // Test 6: Data Flow
+    console.log('\n6. Testing data flow...');
     const { data: recordings } = await supabase
       .from('recordings')
       .select('*')
@@ -97,7 +115,6 @@ async function testBackend() {
     if (recordings && recordings.length > 0) {
       console.log(`✅ Found ${recordings.length} recordings in database`);
       
-      // Check data completeness
       const completedRecordings = recordings.filter(r => r.status === 'completed');
       const processingRecordings = recordings.filter(r => r.status === 'processing');
       
@@ -112,25 +129,60 @@ async function testBackend() {
         console.log(`   Summary: ${sample.summary_content ? '✅' : '❌'}`);
         console.log(`   Report: ${sample.report_content ? '✅' : '❌'}`);
       }
+      results.dataFlow = true;
     } else {
       console.log('⚠️  No recordings found in database');
       console.log('   Run: npm run setup:supabase to add sample data');
     }
 
+    // Summary
     console.log('\n🎉 Backend testing complete!');
-    console.log('\n📋 Summary:');
-    console.log('   ✅ Database: Connected');
-    console.log('   ✅ Storage: Connected');
-    console.log('   ✅ OpenAI: Connected');
-    console.log('   ✅ Data Flow: Working');
-    
-    return true;
+    console.log('\n📊 Test Results Summary:');
+    console.log(`   Database: ${results.database ? '✅' : '❌'} ${results.database ? 'Connected' : 'Failed'}`);
+    console.log(`   Storage: ${results.storage ? '✅' : '❌'} ${results.storage ? 'Connected' : 'Failed'}`);
+    console.log(`   API: ${results.api ? '✅' : '⚠️'} ${results.api ? 'Working' : 'Not tested'}`);
+    console.log(`   OpenAI: ${results.openai ? '✅' : '⚠️'} ${results.openai ? 'Connected' : 'Not configured'}`);
+    console.log(`   Ollama: ${results.ollama ? '✅' : '⚠️'} ${results.ollama ? 'Connected' : 'Not available'}`);
+    console.log(`   Data Flow: ${results.dataFlow ? '✅' : '❌'} ${results.dataFlow ? 'Working' : 'Failed'}`);
+
+    // AI Provider Status
+    console.log('\n🤖 AI Provider Status:');
+    if (results.openai && results.ollama) {
+      console.log('🎉 Both AI providers available - Full functionality enabled!');
+    } else if (results.openai) {
+      console.log('☁️  OpenAI only - Cloud AI processing available');
+    } else if (results.ollama) {
+      console.log('🏠 Ollama only - Local AI processing available');
+    } else {
+      console.log('⚠️  No AI providers available - Limited functionality');
+    }
+
+    // Recommendations
+    console.log('\n💡 Recommendations:');
+    if (!results.openai && !results.ollama) {
+      console.log('   🚨 Configure at least one AI provider for full functionality');
+    }
+    if (!results.openai) {
+      console.log('   ☁️  Add OpenAI API key for best transcription accuracy');
+    }
+    if (!results.ollama) {
+      console.log('   🏠 Install Ollama for privacy-focused local AI processing');
+    }
+    if (!results.storage) {
+      console.log('   📦 Create "audio-recordings" bucket in Supabase dashboard');
+    }
+
+    return results;
 
   } catch (error) {
     console.error('❌ Backend test failed:', error.message);
-    return false;
+    return results;
   }
 }
 
 // Run tests
-testBackend();
+if (require.main === module) {
+  testBackend();
+}
+
+module.exports = { testBackend };

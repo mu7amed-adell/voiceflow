@@ -9,9 +9,12 @@
     "lint": "next lint",
     "setup:env": "node scripts/check-env.js",
     "setup:supabase": "node scripts/setup-supabase.js",
-    "setup": "npm run setup:env && npm run setup:supabase",
+    "setup:ollama": "node scripts/check-ollama-server.js",
+    "setup": "npm run setup:env && npm run setup:supabase && npm run setup:ollama",
     "test:backend": "node scripts/test-backend.js",
-    "verify": "npm run setup:env && npm run test:backend"
+    "test:ollama": "node scripts/check-ollama-server.js",
+    "verify": "npm run setup:env && npm run test:backend",
+    "check:ai": "npm run test:ollama && echo '\n' && npm run setup:env"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",

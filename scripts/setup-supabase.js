@@ -5,8 +5,8 @@
 
 require('dotenv').config({ path: '../.env.local' });
 const { createClient } = require('@supabase/supabase-js');
+const { checkOllamaConnection } = require('./check-ollama-server');
 
-// You'll need to replace these with your actual Supabase credentials
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
@@ -19,6 +19,8 @@ if (!SUPABASE_URL || !SUPABASE_SERVICE_KEY) {
   console.log('NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key');
   console.log('SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key');
   console.log('OPENAI_API_KEY=your_openai_api_key');
+  console.log('OLLAMA_BASE_URL=http://localhost:11434');
+  console.log('OLLAMA_MODEL=llama3.2');
   console.log('\n3. Get these values from your Supabase dashboard → Settings → API');
   process.exit(1);
 }
@@ -29,7 +31,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
 const sampleRecordings = [
   {
     title: 'Team Meeting Notes - Q1 Planning',
-    duration: 1847, // ~30 minutes
+    duration: 1847,
     audio_url: 'https://example.com/sample-audio-1.webm',
     file_size: 2456789,
     status: 'completed',
@@ -74,7 +76,7 @@ const sampleRecordings = [
   },
   {
     title: 'Client Feedback Session - Product Demo',
-    duration: 892, // ~15 minutes
+    duration: 892,
     audio_url: 'https://example.com/sample-audio-2.webm',
     file_size: 1234567,
     status: 'completed',
@@ -119,7 +121,7 @@ const sampleRecordings = [
   },
   {
     title: 'Personal Voice Note - Daily Reflection',
-    duration: 234, // ~4 minutes
+    duration: 234,
     audio_url: 'https://example.com/sample-audio-3.webm',
     file_size: 456789,
     status: 'processing',
@@ -127,7 +129,7 @@ const sampleRecordings = [
     transcription_confidence: 98,
     transcription_language: 'en',
     transcription_speaker_count: 1,
-    summary_content: null, // Still processing
+    summary_content: null,
     summary_key_points: null,
     summary_topics: null,
     summary_sentiment_score: null,
@@ -195,10 +197,39 @@ async function setupSupabase() {
       console.log(`   ${index + 1}. ${recording.title} (${recording.status})`);
     });
 
+    // Check AI providers
+    console.log('\n4. Checking AI provider availability...');
+    
+    // Check OpenAI
+    const hasOpenAI = process.env.OPENAI_API_KEY;
+    if (hasOpenAI) {
+      console.log('✅ OpenAI: Configured for cloud AI processing');
+    } else {
+      console.log('⚠️  OpenAI: Not configured (add OPENAI_API_KEY)');
+    }
+
+    // Check Ollama
+    const ollamaResult = await checkOllamaConnection();
+    if (ollamaResult.available) {
+      console.log('✅ Ollama: Available for local AI processing');
+    } else {
+      console.log('⚠️  Ollama: Not available (install and start Ollama server)');
+    }
+
     console.log('\n🎉 Supabase setup complete!');
     console.log('\n📋 Next Steps:');
     console.log('   1. Create storage bucket "audio-recordings" in Supabase dashboard');
-    console.log('   2. Add your OpenAI API key to .env.local');
+    
+    if (!hasOpenAI && !ollamaResult.available) {
+      console.log('   2. Configure at least one AI provider:');
+      console.log('      • OpenAI: Add OPENAI_API_KEY to .env.local');
+      console.log('      • Ollama: Install and start Ollama server');
+    } else if (!hasOpenAI) {
+      console.log('   2. Optional: Add OpenAI API key for best transcription accuracy');
+    } else if (!ollamaResult.available) {
+      console.log('   2. Optional: Install Ollama for local AI processing');
+    }
+    
     console.log('   3. Start the development server: npm run dev');
     console.log('   4. Test recording functionality');
 
