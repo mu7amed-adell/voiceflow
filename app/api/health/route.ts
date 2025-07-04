@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase/client';
+import { getAvailableAIProviders } from '@/lib/services/ai-service';
 
 export async function GET() {
   try {
@@ -13,18 +14,23 @@ export async function GET() {
       throw new Error(`Database connection failed: ${error.message}`);
     }
 
-    // Check OpenAI API key presence
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OpenAI API key not configured');
-    }
+    // Check AI providers
+    const aiProviders = await getAvailableAIProviders();
+
+    // Check if at least one AI provider is available
+    const hasAIProvider = aiProviders.openai || aiProviders.ollama;
 
     return NextResponse.json({
       status: 'healthy',
       timestamp: new Date().toISOString(),
       services: {
         database: 'connected',
-        openai: 'configured',
-        storage: 'available'
+        storage: 'available',
+        ai_providers: {
+          openai: aiProviders.openai ? 'available' : 'unavailable',
+          ollama: aiProviders.ollama ? 'available' : 'unavailable',
+          any_available: hasAIProvider
+        }
       }
     });
 

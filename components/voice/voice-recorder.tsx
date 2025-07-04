@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { AudioVisualizer } from './audio-visualizer';
 import { VolumeIndicator } from './volume-indicator';
+import { AIProviderSelector } from './ai-provider-selector';
 import { useRecordingsStore } from '@/lib/store/recordings-store';
 import { formatDuration } from '@/lib/utils/format';
 import { 
@@ -17,9 +18,15 @@ import {
   Save,
   Trash2,
   Volume2,
-  Loader2
+  Loader2,
+  Settings
 } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 
 type RecordingState = 'idle' | 'recording' | 'paused' | 'stopped' | 'uploading';
 
@@ -28,6 +35,8 @@ export function VoiceRecorder() {
   const [duration, setDuration] = useState(0);
   const [audioLevel, setAudioLevel] = useState(0);
   const [audioData, setAudioData] = useState<number[]>([]);
+  const [selectedAIProvider, setSelectedAIProvider] = useState<string>('openai');
+  const [showAISettings, setShowAISettings] = useState(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -172,6 +181,25 @@ export function VoiceRecorder() {
         const audioBlob = new Blob(chunksRef.current, { type: 'audio/webm' });
         const title = `Recording ${new Date().toLocaleString()}`;
         
+        // Create FormData with AI provider selection
+        const formData = new FormData();
+        formData.append('audio', audioBlob, 'recording.webm');
+        formData.append('title', title);
+        formData.append('duration', duration.toString());
+        formData.append('aiProvider', selectedAIProvider);
+
+        const response = await fetch('/api/upload-recording', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to upload recording');
+        }
+
+        const data = await response.json();
+        
+        // Add to store
         await addRecording(audioBlob, title, duration);
         
         // Reset state
@@ -179,14 +207,14 @@ export function VoiceRecorder() {
         setRecordingState('idle');
         setDuration(0);
         
-        toast.success('Recording saved and processing started!');
+        toast.success(`Recording saved and processing with ${selectedAIProvider === 'ollama' ? 'Ollama (Local)' : 'OpenAI'}!`);
       } catch (error) {
         console.error('Error saving recording:', error);
         setRecordingState('stopped');
         toast.error('Failed to save recording. Please try again.');
       }
     }
-  }, [duration, addRecording]);
+  }, [duration, selectedAIProvider, addRecording]);
 
   const discardRecording = useCallback(() => {
     chunksRef.current = [];
@@ -233,13 +261,34 @@ export function VoiceRecorder() {
       <CardHeader className="pb-4">
         <CardTitle className="flex items-center justify-between text-lg">
           <span>Voice Recorder</span>
-          <Badge variant="outline" className={`${getStatusColor()} text-white border-transparent`}>
-            {getStatusText()}
-          </Badge>
+          <div className="flex items-center space-x-2">
+            <Badge variant="outline" className={`${getStatusColor()} text-white border-transparent`}>
+              {getStatusText()}
+            </Badge>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowAISettings(!showAISettings)}
+              className="h-8 w-8 p-0"
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+          </div>
         </CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-6">
+        {/* AI Provider Settings */}
+        <Collapsible open={showAISettings} onOpenChange={setShowAISettings}>
+          <CollapsibleContent className="space-y-4">
+            <AIProviderSelector
+              selectedProvider={selectedAIProvider}
+              onProviderChange={setSelectedAIProvider}
+              disabled={recordingState !== 'idle'}
+            />
+          </CollapsibleContent>
+        </Collapsible>
+
         {/* Error Display */}
         {error && (
           <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -335,7 +384,7 @@ export function VoiceRecorder() {
                 className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
               >
                 <Save className="w-5 h-5 mr-2" />
-                Save Recording
+                Save & Process with {selectedAIProvider === 'ollama' ? 'Ollama' : 'OpenAI'}
               </Button>
               <Button 
                 onClick={discardRecording}
@@ -354,7 +403,7 @@ export function VoiceRecorder() {
               className="w-full h-12 bg-gradient-to-r from-purple-500 to-purple-600"
             >
               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              Uploading & Processing...
+              Uploading & Processing with {selectedAIProvider === 'ollama' ? 'Ollama (Local)' : 'OpenAI'}...
             </Button>
           )}
         </div>
@@ -367,7 +416,8 @@ export function VoiceRecorder() {
               <li>Find a quiet environment</li>
               <li>Speak clearly and at normal pace</li>
               <li>Keep microphone 6-12 inches away</li>
-              <li>Recordings are processed with AI for transcription and analysis</li>
+              <li>Choose your preferred AI provider for analysis</li>
+              <li>Ollama provides local privacy, OpenAI offers advanced accuracy</li>
             </ul>
           </div>
         )}
