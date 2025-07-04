@@ -1,6 +1,23 @@
 # VoiceFlow AI - Intelligent Voice Notes
 
-A modern web application for recording, transcribing, and analyzing voice notes using AI. Built with Next.js, Supabase, and OpenAI.
+## About This README
+
+This README serves as your comprehensive guide to understanding, setting up, and deploying the VoiceFlow AI application. It's structured to provide both quick-start instructions for developers eager to get the application running, as well as detailed technical documentation for those who need to understand the architecture, customize features, or deploy to production environments.
+
+**What you'll find in this README:**
+
+- **Project Overview**: Understanding what VoiceFlow AI does and its key capabilities
+- **Technical Architecture**: Detailed breakdown of the technology stack and project structure
+- **Setup Instructions**: Step-by-step guide to get the application running locally
+- **Configuration Details**: Environment variables, database setup, and external service integration
+- **Usage Guidelines**: How to use the application's features effectively
+- **API Documentation**: Available endpoints and their functionality
+- **Deployment Information**: Production deployment options and best practices
+- **Troubleshooting**: Common issues and their solutions
+
+Whether you're a developer looking to contribute, a system administrator preparing for deployment, or a stakeholder wanting to understand the technical capabilities, this README provides the information you need to work effectively with VoiceFlow AI.
+
+---
 
 ## Features
 
