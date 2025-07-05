@@ -11,7 +11,7 @@ import {
 } from './lib/services/ollama';
 
 // Load environment variables from the root .env.local file
-dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '.env.local') });
 
 // Test configuration
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
@@ -327,4 +327,4 @@ main().catch(console.error);
 
 
 // npm install --save-dev tsx
-// npx tsx scripts/ollama-test-file.ts test
+// npx tsx ollama-test-file.ts test

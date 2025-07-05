@@ -160,3 +160,5 @@ Sentiment Score: ${summary.sentimentScore}`;
 export async function transcribeAudioWithOllama(audioFile: File): Promise<TranscriptionResult> {
   throw new Error('Audio transcription with Ollama requires additional setup with a local transcription model like Whisper.cpp');
 }
+
+export type { TranscriptionResult, SummaryResult, ReportResult };
