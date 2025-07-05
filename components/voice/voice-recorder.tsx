@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { AudioVisualizer } from './audio-visualizer';
 import { VolumeIndicator } from './volume-indicator';
-import { AIProviderSelector } from './ai-provider-selector';
 import { useRecordingsStore } from '@/lib/store/recordings-store';
+import { useSettingsStore } from '@/lib/store/settings-store';
 import { formatDuration } from '@/lib/utils/format';
 import { 
   Mic, 
@@ -18,15 +18,9 @@ import {
   Save,
   Trash2,
   Volume2,
-  Loader2,
-  Settings
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from '@/components/ui/collapsible';
 
 type RecordingState = 'idle' | 'recording' | 'paused' | 'stopped' | 'uploading';
 
@@ -35,8 +29,7 @@ export function VoiceRecorder() {
   const [duration, setDuration] = useState(0);
   const [audioLevel, setAudioLevel] = useState(0);
   const [audioData, setAudioData] = useState<number[]>([]);
-  const [selectedAIProvider, setSelectedAIProvider] = useState<string>('openai');
-  const [showAISettings, setShowAISettings] = useState(false);
+  const { selectedProvider: selectedAIProvider } = useSettingsStore();
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -265,30 +258,11 @@ export function VoiceRecorder() {
             <Badge variant="outline" className={`${getStatusColor()} text-white border-transparent`}>
               {getStatusText()}
             </Badge>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowAISettings(!showAISettings)}
-              className="h-8 w-8 p-0"
-            >
-              <Settings className="w-4 h-4" />
-            </Button>
           </div>
         </CardTitle>
       </CardHeader>
       
       <CardContent className="space-y-6">
-        {/* AI Provider Settings */}
-        <Collapsible open={showAISettings} onOpenChange={setShowAISettings}>
-          <CollapsibleContent className="space-y-4">
-            <AIProviderSelector
-              selectedProvider={selectedAIProvider}
-              onProviderChange={setSelectedAIProvider}
-              disabled={recordingState !== 'idle'}
-            />
-          </CollapsibleContent>
-        </Collapsible>
-
         {/* Error Display */}
         {error && (
           <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">

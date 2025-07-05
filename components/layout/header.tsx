@@ -47,9 +47,14 @@ export function Header() {
         </nav>
 
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="sm">
-            <Settings className="w-4 h-4" />
-          </Button>
+          <Link href="/settings" passHref>
+            <Button
+              variant={isActive('/settings') ? 'default' : 'ghost'}
+              size="icon"
+            >
+              <Settings className="w-4 h-4" />
+            </Button>
+          </Link>
           <ModeToggle />
         </div>
       </div>
