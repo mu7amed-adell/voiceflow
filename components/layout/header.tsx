@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/ui/mode-toggle';
-import { Bot, Brain, FileText, Settings, BarChart3, Sparkles } from 'lucide-react';
+import { Bot, Settings } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
@@ -29,37 +29,6 @@ export function Header() {
             </div>
           </Link>
         </div>
-
-        <nav className="hidden md:flex items-center space-x-1">
-          <Link href="/analytics">
-            <Button 
-              variant={isActive('/analytics') ? 'default' : 'ghost'} 
-              size="sm" 
-              className={`text-slate-600 dark:text-slate-300 hover:bg-blue-50 dark:hover:bg-blue-900/20 ${
-                isActive('/analytics') ? 'bg-gradient-to-r from-blue-500 to-indigo-600 text-white' : ''
-              }`}
-            >
-              <BarChart3 className="w-4 h-4 mr-2" />
-              Analytics
-            </Button>
-          </Link>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-slate-600 dark:text-slate-300 hover:bg-purple-50 dark:hover:bg-purple-900/20"
-          >
-            <Sparkles className="w-4 h-4 mr-2" />
-            AI Models
-          </Button>
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-slate-600 dark:text-slate-300 hover:bg-green-50 dark:hover:bg-green-900/20"
-          >
-            <FileText className="w-4 h-4 mr-2" />
-            Export
-          </Button>
-        </nav>
 
         <div className="flex items-center space-x-3">
           <Link href="/settings" passHref>
