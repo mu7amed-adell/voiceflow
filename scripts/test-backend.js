@@ -4,7 +4,7 @@
  */
 require('dotenv').config({ path: '../.env.local' });
 const { createClient } = require('@supabase/supabase-js');
-const { checkOllamaConnection } = require('./check-ollama-server');
+const { checkOllamaConnection } = require('./test-ollama-server.js');
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -103,7 +103,12 @@ async function testBackend() {
     // Test 5: Ollama Connection
     console.log('\n5. Testing Ollama connection...');
     const ollamaResult = await checkOllamaConnection();
-    results.ollama = ollamaResult.available;
+    if (ollamaResult.available) {
+      console.log('✅ Ollama connection successful');
+      results.ollama = true;
+    } else {
+      console.log(`⚠️  Ollama not available: ${ollamaResult.error}`);
+    }
 
     // Test 6: Data Flow
     console.log('\n6. Testing data flow...');

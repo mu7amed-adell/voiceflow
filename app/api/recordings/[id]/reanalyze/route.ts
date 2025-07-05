@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
-import { generateSummary, generateReport } from '@/lib/services/ai-service';
+import { generateSummary, generateReport, AIProvider } from '@/lib/services/ai-service';
 
 export async function POST(
   request: NextRequest,
@@ -58,15 +58,27 @@ export async function POST(
   }
 }
 
+function getAIProvider(): AIProvider {
+  const provider = process.env.AI_PROVIDER;
+  if (provider === 'openai' || provider === 'ollama') {
+    return provider;
+  }
+  // Default to 'openai' if the env var is missing or invalid
+  console.warn(`Invalid AI_PROVIDER: "${provider}". Falling back to "openai".`);
+  return 'openai';
+}
+
 async function reanalyzeRecordingInBackground(recordingId: string, transcriptionText: string) {
   try {
-    // Get AI provider from environment or default to OpenAI
-    const aiProvider = process.env.AI_PROVIDER || 'openai';
+    const aiProvider = getAIProvider();
 
     // Generate new summary
-    const summary = await generateSummary(transcriptionText, aiProvider as any);
-    
-    // Update recording with new summary
+    const summary = await generateSummary(transcriptionText, aiProvider);
+
+    // Generate new report
+    const report = await generateReport(transcriptionText, summary, aiProvider);
+
+    // Update recording with new summary, report, and mark as completed in a single call
     await supabaseAdmin
       .from('recordings')
       .update({
@@ -74,17 +86,6 @@ async function reanalyzeRecordingInBackground(recordingId: string, transcription
         summary_key_points: summary.keyPoints,
         summary_topics: summary.topics,
         summary_sentiment_score: summary.sentimentScore,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', recordingId);
-
-    // Generate new report
-    const report = await generateReport(transcriptionText, summary, aiProvider as any);
-    
-    // Update recording with new report and mark as completed
-    await supabaseAdmin
-      .from('recordings')
-      .update({
         report_content: report.content,
         report_insights: report.insights,
         report_metrics: report.metrics,

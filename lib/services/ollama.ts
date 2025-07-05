@@ -1,3 +1,5 @@
+import type { TranscriptionResult, SummaryResult, ReportResult } from './ai-types';
+
 interface OllamaResponse {
   model: string;
   created_at: string;
@@ -5,44 +7,8 @@ interface OllamaResponse {
   done: boolean;
 }
 
-export interface TranscriptionResult {
-  content: string;
-  confidence: number;
-  language: string;
-  speakerCount?: number;
-  timestamps?: Array<{
-    start: number;
-    end: number;
-    text: string;
-  }>;
-}
-
-export interface SummaryResult {
-  content: string;
-  keyPoints: string[];
-  topics: string[];
-  sentimentScore: number;
-}
-
-export interface ReportResult {
-  content: string;
-  insights: string[];
-  metrics: {
-    speakingTime: number;
-    pauseFrequency: number;
-    averageResponseTime: number;
-    sentimentTrend: string;
-  };
-  actionItems: string[];
-  sentimentAnalysis: {
-    overall: string;
-    confidence: number;
-    emotions: string[];
-  };
-}
-
 const OLLAMA_BASE_URL = process.env.OLLAMA_BASE_URL || 'http://localhost:11434';
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2';
+const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3.2:3b';
 
 async function callOllama(prompt: string, systemPrompt?: string): Promise<string> {
   try {

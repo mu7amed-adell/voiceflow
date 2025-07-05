@@ -1,11 +1,11 @@
-import { 
-  transcribeAudio as transcribeWithOpenAI, 
-  generateSummary as generateSummaryWithOpenAI, 
+import {
+  transcribeAudio as transcribeWithOpenAI,
+  generateSummary as generateSummaryWithOpenAI,
   generateReport as generateReportWithOpenAI,
-  TranscriptionResult,
-  SummaryResult,
-  ReportResult
 } from './openai';
+
+// Import shared types from their own file
+import type { TranscriptionResult, SummaryResult, ReportResult } from './ai-types';
 
 import {
   generateSummaryWithOllama,
@@ -13,7 +13,7 @@ import {
   checkOllamaConnection
 } from './ollama';
 
-type AIProvider = 'openai' | 'ollama';
+export type AIProvider = 'openai' | 'ollama';
 
 const DEFAULT_AI_PROVIDER: AIProvider = (process.env.AI_PROVIDER as AIProvider) || 'openai';
 
@@ -90,4 +90,5 @@ export async function generateReport(
   }
 }
 
-export { TranscriptionResult, SummaryResult, ReportResult };
+// Re-export the types for other parts of the application to use
+export type { TranscriptionResult, SummaryResult, ReportResult, AIProvider };
