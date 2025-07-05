@@ -383,18 +383,6 @@ export function VoiceRecorder() {
         </div>
 
         {/* Recording Tips */}
-        {recordingState === 'idle' && (
-          <div className="text-xs text-slate-500 dark:text-slate-400 space-y-1">
-            <p>💡 <strong>Tips for better recordings:</strong></p>
-            <ul className="list-disc list-inside space-y-1 ml-2">
-              <li>Find a quiet environment</li>
-              <li>Speak clearly and at normal pace</li>
-              <li>Keep microphone 6-12 inches away</li>
-              <li>Choose your preferred AI provider for analysis</li>
-              <li>Ollama provides local privacy, OpenAI offers advanced accuracy</li>
-            </ul>
-          </div>
-        )}
       </CardContent>
     </Card>
   );
