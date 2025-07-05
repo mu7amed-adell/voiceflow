@@ -16,7 +16,9 @@ import {
   FileAudio,
   Loader2,
   CheckCircle,
-  XCircle
+  XCircle,
+  Sparkles,
+  RefreshCw
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -29,6 +31,7 @@ interface RecordingCardProps {
 
 export function RecordingCard({ recording, isSelected, onClick }: RecordingCardProps) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isReanalyzing, setIsReanalyzing] = useState(false);
   const { deleteRecording } = useRecordingsStore();
 
   const handleDelete = (e: React.MouseEvent) => {
@@ -48,10 +51,35 @@ export function RecordingCard({ recording, isSelected, onClick }: RecordingCardP
     toast.success('Download started');
   };
 
+  const handleReanalyze = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsReanalyzing(true);
+    
+    try {
+      const response = await fetch(`/api/recordings/${recording.id}/reanalyze`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to reanalyze recording');
+      }
+
+      toast.success('Reanalysis started', {
+        description: 'Your recording is being processed again with the latest AI models'
+      });
+    } catch (error) {
+      console.error('Error reanalyzing recording:', error);
+      toast.error('Failed to reanalyze recording', {
+        description: 'Please try again later'
+      });
+    } finally {
+      setIsReanalyzing(false);
+    }
+  };
+
   const togglePlayback = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsPlaying(!isPlaying);
-    // In a real app, you'd control audio playback here
   };
 
   const getStatusIcon = () => {
@@ -70,32 +98,32 @@ export function RecordingCard({ recording, isSelected, onClick }: RecordingCardP
   const getStatusColor = () => {
     switch (recording.status) {
       case 'processing':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+        return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white';
       case 'completed':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+        return 'bg-gradient-to-r from-green-500 to-green-600 text-white';
       case 'failed':
-        return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+        return 'bg-gradient-to-r from-red-500 to-red-600 text-white';
       default:
-        return 'bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-200';
+        return 'bg-gradient-to-r from-slate-400 to-slate-500 text-white';
     }
   };
 
   return (
     <Card 
-      className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+      className={`cursor-pointer transition-all duration-300 hover:shadow-lg hover:scale-[1.02] ${
         isSelected 
-          ? 'ring-2 ring-blue-500 bg-blue-50/50 dark:bg-blue-900/20' 
-          : 'bg-white/60 dark:bg-slate-700/60 hover:bg-white/80 dark:hover:bg-slate-700/80'
-      } backdrop-blur-sm border-slate-200/50 dark:border-slate-600/50`}
+          ? 'ring-2 ring-blue-500 bg-gradient-to-br from-blue-50/80 to-indigo-50/80 dark:from-blue-900/30 dark:to-indigo-900/30 shadow-lg' 
+          : 'bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-700/80 dark:to-slate-700/60 hover:from-white/90 hover:to-white/70 dark:hover:from-slate-700/90 dark:hover:to-slate-700/70'
+      } backdrop-blur-sm border border-white/20 dark:border-slate-600/50`}
       onClick={onClick}
     >
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between mb-3">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between mb-4">
           <div className="flex-1 min-w-0">
-            <h3 className="font-medium text-sm truncate text-slate-900 dark:text-slate-100 mb-1">
+            <h3 className="font-semibold text-sm truncate text-slate-900 dark:text-slate-100 mb-2">
               {recording.title}
             </h3>
-            <div className="flex items-center space-x-3 text-xs text-slate-500 dark:text-slate-400">
+            <div className="flex items-center space-x-4 text-xs text-slate-500 dark:text-slate-400">
               <span className="flex items-center">
                 <Clock className="w-3 h-3 mr-1" />
                 {formatDuration(recording.duration)}
@@ -107,9 +135,9 @@ export function RecordingCard({ recording, isSelected, onClick }: RecordingCardP
             </div>
           </div>
           
-          <div className="flex items-center space-x-1 ml-2">
+          <div className="flex items-center space-x-2 ml-3">
             {getStatusIcon()}
-            <Badge variant="secondary" className={`text-xs ${getStatusColor()}`}>
+            <Badge variant="secondary" className={`text-xs font-medium border-0 ${getStatusColor()}`}>
               {recording.status}
             </Badge>
           </div>
@@ -117,23 +145,32 @@ export function RecordingCard({ recording, isSelected, onClick }: RecordingCardP
 
         {/* Processing Progress */}
         {recording.status === 'processing' && (
-          <div className="mb-3">
-            <Progress value={65} className="h-1" />
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-              Processing transcription...
+          <div className="mb-4">
+            <Progress value={65} className="h-2 bg-blue-100 dark:bg-blue-900" />
+            <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 font-medium">
+              AI is analyzing your recording...
             </p>
           </div>
         )}
 
-        {/* Quick Stats */}
+        {/* Quick Preview */}
         {recording.status === 'completed' && recording.transcription && (
-          <div className="text-xs text-slate-600 dark:text-slate-300 mb-3 line-clamp-2">
-            {recording.transcription.content.substring(0, 120)}...
+          <div className="text-xs text-slate-600 dark:text-slate-300 mb-4 line-clamp-2 bg-slate-50 dark:bg-slate-800 p-3 rounded-lg border border-slate-200 dark:border-slate-700">
+            "{recording.transcription.content.substring(0, 120)}..."
+          </div>
+        )}
+
+        {/* Failed State */}
+        {recording.status === 'failed' && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-xs text-red-600 dark:text-red-400 font-medium">
+              Processing failed. Try reanalyzing this recording.
+            </p>
           </div>
         )}
 
         <div className="flex items-center justify-between">
-          <span className="text-xs text-slate-400 dark:text-slate-500">
+          <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
             {formatRelativeTime(recording.createdAt)}
           </span>
           
@@ -142,31 +179,48 @@ export function RecordingCard({ recording, isSelected, onClick }: RecordingCardP
               variant="ghost"
               size="sm"
               onClick={togglePlayback}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-900/30"
             >
               {isPlaying ? (
-                <Pause className="w-4 h-4" />
+                <Pause className="w-4 h-4 text-blue-600" />
               ) : (
-                <Play className="w-4 h-4" />
+                <Play className="w-4 h-4 text-blue-600" />
               )}
             </Button>
+            
+            {(recording.status === 'completed' || recording.status === 'failed') && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleReanalyze}
+                disabled={isReanalyzing}
+                className="h-8 w-8 p-0 hover:bg-purple-100 dark:hover:bg-purple-900/30"
+                title="Reanalyze with AI"
+              >
+                {isReanalyzing ? (
+                  <Loader2 className="w-4 h-4 text-purple-600 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-purple-600" />
+                )}
+              </Button>
+            )}
             
             <Button
               variant="ghost"
               size="sm"
               onClick={handleDownload}
-              className="h-8 w-8 p-0"
+              className="h-8 w-8 p-0 hover:bg-green-100 dark:hover:bg-green-900/30"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4 text-green-600" />
             </Button>
             
             <Button
               variant="ghost"
               size="sm"
               onClick={handleDelete}
-              className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
+              className="h-8 w-8 p-0 hover:bg-red-100 dark:hover:bg-red-900/30"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4 text-red-600" />
             </Button>
           </div>
         </div>

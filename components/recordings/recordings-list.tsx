@@ -14,7 +14,8 @@ import {
   Clock,
   SortAsc,
   SortDesc,
-  RefreshCw
+  RefreshCw,
+  Sparkles
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -92,12 +93,19 @@ export function RecordingsList({ onSelectRecording, selectedRecording }: Recordi
   };
 
   return (
-    <Card className="h-full bg-white/40 dark:bg-slate-800/40 backdrop-blur-sm border-slate-200/50 dark:border-slate-700/50">
+    <Card className="h-full bg-gradient-to-br from-white/80 to-white/60 dark:from-slate-800/80 dark:to-slate-800/60 backdrop-blur-xl border border-white/20 dark:border-slate-700/50 shadow-2xl">
       <CardHeader className="pb-4">
-        <CardTitle className="flex items-center justify-between text-lg">
-          <span>Recordings</span>
+        <CardTitle className="flex items-center justify-between text-xl font-bold">
+          <div className="flex items-center space-x-3">
+            <div className="p-2 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <span className="bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent">
+              Voice Library
+            </span>
+          </div>
           <div className="flex items-center space-x-2">
-            <Badge variant="secondary" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+            <Badge variant="secondary" className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white border-0 px-3 py-1 font-medium">
               {displayCount}
             </Badge>
             <Button 
@@ -105,63 +113,73 @@ export function RecordingsList({ onSelectRecording, selectedRecording }: Recordi
               size="sm" 
               onClick={handleRefresh}
               disabled={isLoading}
+              className="h-8 w-8 p-0 hover:bg-blue-100 dark:hover:bg-blue-900/30"
             >
-              <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`w-4 h-4 text-blue-600 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </CardTitle>
         
         {/* Error Display */}
         {error && (
-          <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          <div className="p-3 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-900/20 dark:to-red-800/20 border border-red-200 dark:border-red-800 rounded-xl">
+            <p className="text-sm text-red-800 dark:text-red-200 font-medium">{error}</p>
           </div>
         )}
         
         {/* Search and Filters */}
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-slate-400" />
             <Input
-              placeholder="Search recordings..."
+              placeholder="Search recordings and transcriptions..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/50 dark:bg-slate-700/50"
+              className="pl-10 bg-white/70 dark:bg-slate-700/70 border-slate-200/50 dark:border-slate-600/50 focus:border-blue-500 focus:ring-blue-500/20"
             />
           </div>
           
           <div className="flex space-x-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button variant="outline" size="sm" className="flex-1 bg-white/70 dark:bg-slate-700/70 border-slate-200/50 dark:border-slate-600/50">
                   <Filter className="w-4 h-4 mr-2" />
                   {filterBy === 'all' ? 'All' : filterBy.charAt(0).toUpperCase() + filterBy.slice(1)}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm">
                 <DropdownMenuItem onClick={() => setFilterBy('all')}>
                   All ({statusCounts.all})
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setFilterBy('completed')}>
-                  Completed ({statusCounts.completed})
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-green-500 rounded-full mr-2" />
+                    Completed ({statusCounts.completed})
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setFilterBy('processing')}>
-                  Processing ({statusCounts.processing})
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full mr-2" />
+                    Processing ({statusCounts.processing})
+                  </div>
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setFilterBy('failed')}>
-                  Failed ({statusCounts.failed})
+                  <div className="flex items-center">
+                    <div className="w-2 h-2 bg-red-500 rounded-full mr-2" />
+                    Failed ({statusCounts.failed})
+                  </div>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="flex-1">
+                <Button variant="outline" size="sm" className="flex-1 bg-white/70 dark:bg-slate-700/70 border-slate-200/50 dark:border-slate-600/50">
                   {sortBy === 'newest' ? <SortDesc className="w-4 h-4 mr-2" /> : <SortAsc className="w-4 h-4 mr-2" />}
                   Sort
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="bg-white/95 dark:bg-slate-800/95 backdrop-blur-sm">
                 <DropdownMenuItem onClick={() => setSortBy('newest')}>
                   <Calendar className="w-4 h-4 mr-2" />
                   Newest First
@@ -189,7 +207,7 @@ export function RecordingsList({ onSelectRecording, selectedRecording }: Recordi
           {isLoading && recordings.length === 0 ? (
             <div className="p-8 text-center text-slate-500 dark:text-slate-400">
               <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <p className="font-medium">Loading recordings...</p>
+              <p className="font-medium">Loading your voice library...</p>
             </div>
           ) : !_hasHydrated ? (
             <div className="p-8 text-center text-slate-500 dark:text-slate-400">
@@ -199,11 +217,11 @@ export function RecordingsList({ onSelectRecording, selectedRecording }: Recordi
             <div className="p-8 text-center text-slate-500 dark:text-slate-400">
               {recordings.length === 0 ? (
                 <div>
-                  <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-700 flex items-center justify-center mx-auto mb-4">
-                    <Search className="w-8 h-8" />
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-4">
+                    <Search className="w-8 h-8 text-white" />
                   </div>
-                  <p className="font-medium">No recordings yet</p>
-                  <p className="text-sm">Start by creating your first voice recording</p>
+                  <p className="font-medium text-lg mb-2">Your voice library is empty</p>
+                  <p className="text-sm">Start by recording your first voice note or uploading an audio file</p>
                 </div>
               ) : (
                 <div>
@@ -213,7 +231,7 @@ export function RecordingsList({ onSelectRecording, selectedRecording }: Recordi
               )}
             </div>
           ) : (
-            <div className="space-y-2 p-4">
+            <div className="space-y-3 p-4">
               {filteredRecordings.map((recording) => (
                 <RecordingCard
                   key={recording.id}
