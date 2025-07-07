@@ -4,6 +4,11 @@ import {
   generateReport as generateReportWithOpenAI,
 } from './openai';
 
+import {
+  transcribeAudioWithGladia,
+  checkGladiaConnection
+} from './gladia';
+
 // Import shared types from their own file
 import type { TranscriptionResult, SummaryResult, ReportResult } from './ai-types';
 
@@ -14,8 +19,10 @@ import {
 } from './ollama';
 
 export type AIProvider = 'openai' | 'ollama';
+export type TranscriptionProvider = 'openai' | 'gladia';
 
 const DEFAULT_AI_PROVIDER: AIProvider = (process.env.AI_PROVIDER as AIProvider) || 'openai';
+const DEFAULT_TRANSCRIPTION_PROVIDER: TranscriptionProvider = 'openai';
 
 export async function getAvailableAIProviders(): Promise<{ openai: boolean; ollama: boolean }> {
   const providers = {
@@ -33,10 +40,45 @@ export async function getAvailableAIProviders(): Promise<{ openai: boolean; olla
   return providers;
 }
 
-export async function transcribeAudio(audioFile: File): Promise<TranscriptionResult> {
-  // For now, transcription is only available through OpenAI Whisper
-  // Ollama doesn't have built-in transcription capabilities
-  return transcribeWithOpenAI(audioFile);
+export async function getAvailableTranscriptionProviders(): Promise<{ openai: boolean; gladia: boolean }> {
+  const providers = {
+    openai: !!process.env.OPENAI_API_KEY,
+    gladia: false
+  };
+
+  // Check Gladia connection
+  try {
+    providers.gladia = await checkGladiaConnection();
+  } catch (error) {
+    console.log('Gladia not available:', error);
+  }
+
+  return providers;
+}
+
+export async function transcribeAudio(
+  audioFile: File, 
+  provider: TranscriptionProvider = DEFAULT_TRANSCRIPTION_PROVIDER
+): Promise<TranscriptionResult> {
+  const availableProviders = await getAvailableTranscriptionProviders();
+
+  // Fallback to OpenAI if requested provider is not available
+  if (provider === 'gladia' && !availableProviders.gladia) {
+    console.warn('Gladia not available, falling back to OpenAI');
+    provider = 'openai';
+  }
+
+  if (provider === 'openai' && !availableProviders.openai) {
+    throw new Error('No transcription provider available');
+  }
+
+  switch (provider) {
+    case 'gladia':
+      return transcribeAudioWithGladia(audioFile);
+    case 'openai':
+    default:
+      return transcribeWithOpenAI(audioFile);
+  }
 }
 
 export async function generateSummary(
@@ -91,4 +133,4 @@ export async function generateReport(
 }
 
 // Re-export the types for other parts of the application to use
-export type { TranscriptionResult, SummaryResult, ReportResult, AIProvider };
+export type { TranscriptionResult, SummaryResult, ReportResult, AIProvider, TranscriptionProvider };

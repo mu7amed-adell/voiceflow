@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
 import { transcribeAudio, generateSummary, generateReport } from '@/lib/services/ai-service';
+import type { TranscriptionProvider, AIProvider } from '@/lib/services/ai-service';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,7 +9,8 @@ export async function POST(request: NextRequest) {
     const audioFile = formData.get('audio') as File;
     const title = formData.get('title') as string;
     const duration = parseInt(formData.get('duration') as string);
-    const aiProvider = formData.get('aiProvider') as string || 'openai';
+    const aiProvider = (formData.get('aiProvider') as string) || 'openai';
+    const transcriptionProvider = (formData.get('transcriptionProvider') as string) || 'openai';
 
     if (!audioFile || !title || !duration) {
       return NextResponse.json(
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Start AI processing in the background
-    processAudioInBackground(recording.id, audioFile, aiProvider);
+    processAudioInBackground(recording.id, audioFile, transcriptionProvider as TranscriptionProvider, aiProvider as AIProvider);
 
     return NextResponse.json({
       success: true,
@@ -88,10 +90,19 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function processAudioInBackground(recordingId: string, audioFile: File, aiProvider: string = 'openai') {
+async function processAudioInBackground(
+  recordingId: string, 
+  audioFile: File, 
+  transcriptionProvider: TranscriptionProvider = 'openai',
+  aiProvider: AIProvider = 'openai'
+) {
   try {
-    // Step 1: Transcribe audio (always uses OpenAI Whisper for now)
-    const transcription = await transcribeAudio(audioFile);
+    console.log(`Starting audio processing for recording ${recordingId}`);
+    console.log(`Using transcription provider: ${transcriptionProvider}`);
+    console.log(`Using AI provider: ${aiProvider}`);
+
+    // Step 1: Transcribe audio with selected provider
+    const transcription = await transcribeAudio(audioFile, transcriptionProvider);
     
     // Update recording with transcription
     await supabaseAdmin
@@ -106,8 +117,10 @@ async function processAudioInBackground(recordingId: string, audioFile: File, ai
       })
       .eq('id', recordingId);
 
+    console.log(`Transcription completed for recording ${recordingId}`);
+
     // Step 2: Generate summary with specified AI provider
-    const summary = await generateSummary(transcription.content, aiProvider as any);
+    const summary = await generateSummary(transcription.content, aiProvider);
     
     // Update recording with summary
     await supabaseAdmin
@@ -121,8 +134,10 @@ async function processAudioInBackground(recordingId: string, audioFile: File, ai
       })
       .eq('id', recordingId);
 
+    console.log(`Summary generated for recording ${recordingId}`);
+
     // Step 3: Generate report with specified AI provider
-    const report = await generateReport(transcription.content, summary, aiProvider as any);
+    const report = await generateReport(transcription.content, summary, aiProvider);
     
     // Update recording with report and mark as completed
     await supabaseAdmin
@@ -137,6 +152,8 @@ async function processAudioInBackground(recordingId: string, audioFile: File, ai
         updated_at: new Date().toISOString()
       })
       .eq('id', recordingId);
+
+    console.log(`Processing completed for recording ${recordingId}`);
 
   } catch (error) {
     console.error('AI processing error:', error);

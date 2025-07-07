@@ -33,7 +33,7 @@ export function VoiceRecorder() {
   const [audioLevel, setAudioLevel] = useState(0);
   const [audioData, setAudioData] = useState<number[]>([]);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
-  const { selectedProvider: selectedAIProvider } = useSettingsStore();
+  const { selectedProvider: selectedAIProvider, selectedTranscriptionProvider } = useSettingsStore();
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -218,6 +218,7 @@ export function VoiceRecorder() {
       formData.append('title', title);
       formData.append('duration', estimatedDuration.toString());
       formData.append('aiProvider', selectedAIProvider);
+      formData.append('transcriptionProvider', selectedTranscriptionProvider);
 
       const response = await fetch('/api/upload-recording', {
         method: 'POST',
@@ -241,7 +242,7 @@ export function VoiceRecorder() {
       }
       
       toast.success('Audio uploaded successfully!', {
-        description: `Processing with ${selectedAIProvider === 'ollama' ? 'Ollama (Local)' : 'OpenAI'}`
+        description: `Processing with ${selectedTranscriptionProvider === 'gladia' ? 'Gladia' : 'OpenAI'} transcription and ${selectedAIProvider === 'ollama' ? 'Ollama (Local)' : 'OpenAI'} analysis`
       });
     } catch (error) {
       console.error('Error uploading file:', error);
@@ -250,7 +251,7 @@ export function VoiceRecorder() {
         description: 'Please try again'
       });
     }
-  }, [uploadedFile, selectedAIProvider, addRecording]);
+  }, [uploadedFile, selectedAIProvider, selectedTranscriptionProvider, addRecording]);
 
   const saveRecording = useCallback(async () => {
     if (chunksRef.current.length > 0) {
@@ -265,6 +266,7 @@ export function VoiceRecorder() {
         formData.append('title', title);
         formData.append('duration', duration.toString());
         formData.append('aiProvider', selectedAIProvider);
+        formData.append('transcriptionProvider', selectedTranscriptionProvider);
 
         const response = await fetch('/api/upload-recording', {
           method: 'POST',
@@ -282,7 +284,7 @@ export function VoiceRecorder() {
         setDuration(0);
         
         toast.success('Recording saved successfully!', {
-          description: `Processing with ${selectedAIProvider === 'ollama' ? 'Ollama (Local)' : 'OpenAI'}`
+          description: `Processing with ${selectedTranscriptionProvider === 'gladia' ? 'Gladia' : 'OpenAI'} transcription and ${selectedAIProvider === 'ollama' ? 'Ollama (Local)' : 'OpenAI'} analysis`
         });
       } catch (error) {
         console.error('Error saving recording:', error);
@@ -292,7 +294,7 @@ export function VoiceRecorder() {
         });
       }
     }
-  }, [duration, selectedAIProvider, addRecording]);
+  }, [duration, selectedAIProvider, selectedTranscriptionProvider, addRecording]);
 
   const discardRecording = useCallback(() => {
     chunksRef.current = [];
@@ -463,7 +465,7 @@ export function VoiceRecorder() {
                   className="flex-1 h-12 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white font-semibold shadow-lg"
                 >
                   <Sparkles className="w-5 h-5 mr-2" />
-                  Process with {selectedAIProvider === 'ollama' ? 'Ollama' : 'OpenAI'}
+                  Process with {selectedTranscriptionProvider === 'gladia' ? 'Gladia' : 'OpenAI'} + {selectedAIProvider === 'ollama' ? 'Ollama' : 'OpenAI'}
                 </Button>
                 <Button 
                   onClick={discardRecording}
@@ -542,21 +544,24 @@ export function VoiceRecorder() {
               className="w-full h-12 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold"
             >
               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              Processing with {selectedAIProvider === 'ollama' ? 'Ollama (Local)' : 'OpenAI'}...
+              Processing with {selectedTranscriptionProvider === 'gladia' ? 'Gladia' : 'OpenAI'} + {selectedAIProvider === 'ollama' ? 'Ollama (Local)' : 'OpenAI'}...
             </Button>
           )}
         </div>
 
-        {/* AI Provider Info */}
+        {/* Provider Info */}
         <div className="p-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20 rounded-xl border border-purple-200 dark:border-purple-800">
           <div className="flex items-center space-x-3">
             <Zap className="w-5 h-5 text-purple-500" />
             <div>
               <p className="text-sm font-medium text-purple-900 dark:text-purple-100">
-                AI Processing: {selectedAIProvider === 'ollama' ? 'Ollama (Local)' : 'OpenAI (Cloud)'}
+                Transcription: {selectedTranscriptionProvider === 'gladia' ? 'Gladia AI' : 'OpenAI Whisper'} • Analysis: {selectedAIProvider === 'ollama' ? 'Ollama (Local)' : 'OpenAI (Cloud)'}
               </p>
               <p className="text-xs text-purple-600 dark:text-purple-300">
-                {selectedAIProvider === 'ollama' 
+                {selectedTranscriptionProvider === 'gladia' 
+                  ? 'Advanced transcription with speaker diarization'
+                  : 'Industry-leading speech recognition'
+                } • {selectedAIProvider === 'ollama' 
                   ? 'Private, local AI analysis with complete data privacy'
                   : 'Advanced cloud AI with industry-leading accuracy'
                 }

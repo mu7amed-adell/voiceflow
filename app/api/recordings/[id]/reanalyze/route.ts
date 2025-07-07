@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase/server';
-import { generateSummary, generateReport, AIProvider } from '@/lib/services/ai-service';
+import { generateSummary, generateReport } from '@/lib/services/ai-service';
+import type { AIProvider } from '@/lib/services/ai-service';
 
 export async function POST(
   request: NextRequest,

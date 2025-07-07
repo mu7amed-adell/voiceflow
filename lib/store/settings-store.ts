@@ -3,14 +3,18 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 
 interface SettingsState {
   selectedProvider: string;
+  selectedTranscriptionProvider: string;
   setSelectedProvider: (provider: string) => void;
+  setSelectedTranscriptionProvider: (provider: string) => void;
 }
 
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      selectedProvider: 'openai', // Default provider
+      selectedProvider: 'openai', // Default AI provider
+      selectedTranscriptionProvider: 'openai', // Default transcription provider
       setSelectedProvider: (provider) => set({ selectedProvider: provider }),
+      setSelectedTranscriptionProvider: (provider) => set({ selectedTranscriptionProvider: provider }),
     }),
     {
       name: 'voiceflow-settings-storage', // name of the item in the storage (must be unique)
