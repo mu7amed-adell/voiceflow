@@ -11,6 +11,11 @@ export async function POST(request: NextRequest) {
     const duration = parseInt(formData.get('duration') as string);
     const aiProvider = (formData.get('aiProvider') as string) || 'openai';
     const transcriptionProvider = (formData.get('transcriptionProvider') as string) || 'openai';
+    
+    // Patient details
+    const patientName = formData.get('patientName') as string;
+    const sessionDate = formData.get('sessionDate') as string;
+    const sessionType = formData.get('sessionType') as string;
 
     if (!audioFile || !title || !duration) {
       return NextResponse.json(
@@ -19,9 +24,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate unique filename
+    // Generate unique filename with patient info
     const timestamp = Date.now();
-    const fileName = `${timestamp}-${audioFile.name}`;
+    const sanitizedPatientName = patientName ? patientName.replace(/[^a-zA-Z0-9]/g, '_') : 'unknown';
+    const fileName = `${timestamp}-${sanitizedPatientName}-${audioFile.name}`;
 
     // Upload audio file to Supabase Storage
     const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
@@ -44,7 +50,7 @@ export async function POST(request: NextRequest) {
       .from('audio-recordings')
       .getPublicUrl(fileName);
 
-    // Create initial recording entry in database
+    // Create initial recording entry in database with patient details
     const { data: recording, error: dbError } = await supabaseAdmin
       .from('recordings')
       .insert({
@@ -52,7 +58,10 @@ export async function POST(request: NextRequest) {
         duration,
         audio_url: urlData.publicUrl,
         file_size: audioFile.size,
-        status: 'processing'
+        status: 'processing',
+        patient_name: patientName,
+        session_date: sessionDate,
+        session_type: sessionType
       })
       .select()
       .single();
@@ -77,7 +86,10 @@ export async function POST(request: NextRequest) {
         createdAt: recording.created_at,
         audioUrl: recording.audio_url,
         size: recording.file_size,
-        status: recording.status
+        status: recording.status,
+        patientName: recording.patient_name,
+        sessionDate: recording.session_date,
+        sessionType: recording.session_type
       }
     });
 

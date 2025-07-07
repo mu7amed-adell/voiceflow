@@ -18,7 +18,10 @@ import {
   CheckCircle,
   XCircle,
   Sparkles,
-  RefreshCw
+  RefreshCw,
+  User,
+  Calendar,
+  Stethoscope
 } from 'lucide-react';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -123,6 +126,29 @@ export function RecordingCard({ recording, isSelected, onClick }: RecordingCardP
             <h3 className="font-semibold text-sm truncate text-slate-900 dark:text-slate-100 mb-2">
               {recording.title}
             </h3>
+            
+            {/* Patient Information */}
+            {recording.patientName && (
+              <div className="flex items-center space-x-3 text-xs text-slate-600 dark:text-slate-300 mb-2">
+                <span className="flex items-center">
+                  <User className="w-3 h-3 mr-1" />
+                  {recording.patientName}
+                </span>
+                {recording.sessionType && (
+                  <span className="flex items-center">
+                    <Stethoscope className="w-3 h-3 mr-1" />
+                    {recording.sessionType}
+                  </span>
+                )}
+                {recording.sessionDate && (
+                  <span className="flex items-center">
+                    <Calendar className="w-3 h-3 mr-1" />
+                    {new Date(recording.sessionDate).toLocaleDateString()}
+                  </span>
+                )}
+              </div>
+            )}
+            
             <div className="flex items-center space-x-4 text-xs text-slate-500 dark:text-slate-400">
               <span className="flex items-center">
                 <Clock className="w-3 h-3 mr-1" />
@@ -148,7 +174,7 @@ export function RecordingCard({ recording, isSelected, onClick }: RecordingCardP
           <div className="mb-4">
             <Progress value={65} className="h-2 bg-blue-100 dark:bg-blue-900" />
             <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 font-medium">
-              AI is analyzing your recording...
+              AI is analyzing {recording.patientName ? `${recording.patientName}'s` : 'your'} recording...
             </p>
           </div>
         )}

@@ -6,6 +6,9 @@ export interface Recording {
   audioUrl: string;
   size: number; // in bytes
   status: 'pending' | 'processing' | 'completed' | 'failed';
+  patientName?: string;
+  sessionDate?: string;
+  sessionType?: string;
   transcription: Transcription | null;
   summary: Summary | null;
   report: Report | null;
