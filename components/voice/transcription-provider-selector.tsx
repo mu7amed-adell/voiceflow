@@ -22,11 +22,13 @@ import {
   Loader2,
   Clock,
   Users,
-  Languages
+  Languages,
+  Brain,
+  Cpu
 } from 'lucide-react';
 
 interface TranscriptionProvider {
-  id: 'openai' | 'gladia';
+  id: 'openai' | 'gladia' | 'huggingface';
   name: string;
   description: string;
   icon: React.ComponentType<any>;
@@ -36,6 +38,7 @@ interface TranscriptionProvider {
   accuracy: string;
   languages: string;
   speed: string;
+  specialty?: string;
 }
 
 interface TranscriptionProviderSelectorProps {
@@ -85,14 +88,33 @@ export function TranscriptionProviderSelector({
           accuracy: 'Very Good',
           languages: '100+ languages',
           speed: 'Very Fast'
+        },
+        {
+          id: 'huggingface',
+          name: 'Arabic Whisper',
+          description: 'Specialized Arabic transcription with code-switching support',
+          icon: Brain,
+          features: ['Arabic specialized', 'Code-switching', 'Dialect support', 'Open source'],
+          available: data.providers.huggingface,
+          isCloud: true,
+          accuracy: 'Excellent (Arabic)',
+          languages: 'Arabic + English',
+          speed: 'Medium',
+          specialty: 'Arabic & Code-Switching'
         }
       ];
       
       setProviders(providerList);
       
-      // Auto-select Gladia if it's available and OpenAI is not
-      if (data.providers.gladia && !data.providers.openai && selectedProvider === 'openai') {
-        onProviderChange('gladia');
+      // Auto-select best available provider if current selection is not available
+      if (!data.providers[selectedProvider]) {
+        if (data.providers.gladia) {
+          onProviderChange('gladia');
+        } else if (data.providers.huggingface) {
+          onProviderChange('huggingface');
+        } else if (data.providers.openai) {
+          onProviderChange('openai');
+        }
       }
       
     } catch (error) {
@@ -105,7 +127,7 @@ export function TranscriptionProviderSelector({
           description: 'Industry-leading speech recognition with exceptional accuracy',
           icon: Mic,
           features: ['99%+ accuracy', 'Multi-language', 'Noise robust', 'Fast processing'],
-          available: false, // Assume not available since OpenAI key is missing
+          available: false,
           isCloud: true,
           accuracy: 'Excellent',
           languages: '50+ languages',
@@ -117,16 +139,29 @@ export function TranscriptionProviderSelector({
           description: 'Advanced transcription with speaker diarization and real-time processing',
           icon: Cloud,
           features: ['Speaker diarization', 'Real-time', 'Custom vocabulary', 'High accuracy'],
-          available: true, // Gladia should be available with hardcoded API key
+          available: true,
           isCloud: true,
           accuracy: 'Very Good',
           languages: '100+ languages',
           speed: 'Very Fast'
+        },
+        {
+          id: 'huggingface',
+          name: 'Arabic Whisper',
+          description: 'Specialized Arabic transcription with code-switching support',
+          icon: Brain,
+          features: ['Arabic specialized', 'Code-switching', 'Dialect support', 'Open source'],
+          available: true,
+          isCloud: true,
+          accuracy: 'Excellent (Arabic)',
+          languages: 'Arabic + English',
+          speed: 'Medium',
+          specialty: 'Arabic & Code-Switching'
         }
       ];
       setProviders(fallbackProviders);
       
-      // Auto-select Gladia if OpenAI is not available
+      // Auto-select Gladia if current selection is not available
       if (selectedProvider === 'openai') {
         onProviderChange('gladia');
       }
@@ -171,6 +206,11 @@ export function TranscriptionProviderSelector({
                   <div className="flex items-center space-x-2">
                     <selectedProviderData.icon className="w-4 h-4" />
                     <span>{selectedProviderData.name}</span>
+                    {selectedProviderData.specialty && (
+                      <Badge variant="outline" className="text-xs bg-orange-50 text-orange-700 border-orange-200">
+                        {selectedProviderData.specialty}
+                      </Badge>
+                    )}
                     {selectedProviderData.available ? (
                       <CheckCircle className="w-4 h-4 text-green-500" />
                     ) : (
@@ -192,6 +232,11 @@ export function TranscriptionProviderSelector({
                   <div className="flex items-center space-x-2 w-full">
                     <provider.icon className="w-4 h-4" />
                     <span className="flex-1">{provider.name}</span>
+                    {provider.specialty && (
+                      <Badge variant="outline" className="text-xs">
+                        Arabic
+                      </Badge>
+                    )}
                     {provider.available ? (
                       <CheckCircle className="w-4 h-4 text-green-500" />
                     ) : (
@@ -206,15 +251,27 @@ export function TranscriptionProviderSelector({
 
         {/* Current Selection Details */}
         {selectedProviderData && (
-          <div className="p-3 rounded-lg border border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20">
+          <div className={`p-3 rounded-lg border ${
+            selectedProviderData.specialty 
+              ? 'border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20'
+              : 'border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-900/20'
+          }`}>
             <div className="flex items-start justify-between mb-2">
               <div className="flex items-center space-x-2">
-                <selectedProviderData.icon className="w-5 h-5 text-blue-500" />
+                <selectedProviderData.icon className={`w-5 h-5 ${
+                  selectedProviderData.specialty ? 'text-orange-500' : 'text-blue-500'
+                }`} />
                 <h4 className="font-medium">{selectedProviderData.name}</h4>
                 <Badge variant="outline" className="text-xs">
                   <Globe className="w-3 h-3 mr-1" />
                   Cloud
                 </Badge>
+                {selectedProviderData.specialty && (
+                  <Badge variant="outline" className="text-xs bg-orange-100 text-orange-700 border-orange-300">
+                    <Brain className="w-3 h-3 mr-1" />
+                    {selectedProviderData.specialty}
+                  </Badge>
+                )}
               </div>
               {selectedProviderData.available ? (
                 <CheckCircle className="w-5 h-5 text-green-500" />
@@ -263,6 +320,11 @@ export function TranscriptionProviderSelector({
                     Gladia service temporarily unavailable. Check your internet connection.
                   </p>
                 )}
+                {selectedProviderData.id === 'huggingface' && (
+                  <p className="text-yellow-800 dark:text-yellow-200">
+                    Hugging Face model temporarily unavailable. The model may be loading.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -283,16 +345,25 @@ export function TranscriptionProviderSelector({
                   key={provider.id}
                   className={`p-3 rounded border text-sm transition-all cursor-pointer ${
                     selectedProvider === provider.id 
-                      ? 'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/30' 
+                      ? provider.specialty
+                        ? 'border-orange-300 bg-orange-50 dark:border-orange-700 dark:bg-orange-900/30'
+                        : 'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/30'
                       : 'border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600'
                   } ${!provider.available ? 'opacity-50' : ''}`}
                   onClick={() => provider.available && onProviderChange(provider.id)}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-2">
-                      <IconComponent className="w-4 h-4 text-blue-500" />
+                      <IconComponent className={`w-4 h-4 ${
+                        provider.specialty ? 'text-orange-500' : 'text-blue-500'
+                      }`} />
                       <span className="font-medium">{provider.name}</span>
                       <Badge variant="outline" className="text-xs">Cloud</Badge>
+                      {provider.specialty && (
+                        <Badge variant="outline" className="text-xs bg-orange-100 text-orange-700 border-orange-300">
+                          Arabic
+                        </Badge>
+                      )}
                     </div>
                     {provider.available ? (
                       <CheckCircle className="w-4 h-4 text-green-500" />
@@ -321,26 +392,26 @@ export function TranscriptionProviderSelector({
           </div>
         </div>
 
-        {/* Quick Setup Instructions */}
+        {/* Provider Comparison */}
         <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-          <h5 className="font-medium text-sm mb-2">Provider Status</h5>
+          <h5 className="font-medium text-sm mb-2">Provider Comparison</h5>
           <div className="space-y-2 text-xs">
             <div>
               <p className="font-medium text-blue-600 dark:text-blue-400">OpenAI Whisper:</p>
               <p className="text-slate-600 dark:text-slate-300">
-                {providers.find(p => p.id === 'openai')?.available 
-                  ? 'Available - Best overall accuracy, proven reliability' 
-                  : 'Unavailable - Requires OPENAI_API_KEY environment variable'
-                }
+                Best overall accuracy, proven reliability, wide language support
               </p>
             </div>
             <div>
               <p className="font-medium text-green-600 dark:text-green-400">Gladia AI:</p>
               <p className="text-slate-600 dark:text-slate-300">
-                {providers.find(p => p.id === 'gladia')?.available 
-                  ? 'Available - Advanced features like speaker diarization, real-time processing' 
-                  : 'Unavailable - Service temporarily unavailable'
-                }
+                Advanced features like speaker diarization, real-time processing, custom vocabulary
+              </p>
+            </div>
+            <div>
+              <p className="font-medium text-orange-600 dark:text-orange-400">Arabic Whisper (Hugging Face):</p>
+              <p className="text-slate-600 dark:text-slate-300">
+                Specialized for Arabic language and code-switching scenarios, excellent for Arabic dialects
               </p>
             </div>
           </div>

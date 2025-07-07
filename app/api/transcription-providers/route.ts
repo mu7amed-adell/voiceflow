@@ -7,7 +7,7 @@ export async function GET() {
     
     return NextResponse.json({
       providers,
-      default: 'openai'
+      default: 'gladia' // Default to Gladia since it's most likely to be available
     });
   } catch (error) {
     console.error('Error checking transcription providers:', error);

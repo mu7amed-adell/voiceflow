@@ -9,6 +9,11 @@ import {
   checkGladiaConnection
 } from './gladia';
 
+import {
+  transcribeAudioWithHuggingFace,
+  checkHuggingFaceConnection
+} from './huggingface';
+
 // Import shared types from their own file
 import type { TranscriptionResult, SummaryResult, ReportResult } from './ai-types';
 
@@ -19,10 +24,10 @@ import {
 } from './ollama';
 
 export type AIProvider = 'openai' | 'ollama';
-export type TranscriptionProvider = 'openai' | 'gladia';
+export type TranscriptionProvider = 'openai' | 'gladia' | 'huggingface';
 
 const DEFAULT_AI_PROVIDER: AIProvider = (process.env.AI_PROVIDER as AIProvider) || 'openai';
-const DEFAULT_TRANSCRIPTION_PROVIDER: TranscriptionProvider = 'gladia'; // Changed default to Gladia
+const DEFAULT_TRANSCRIPTION_PROVIDER: TranscriptionProvider = 'gladia';
 
 export async function getAvailableAIProviders(): Promise<{ openai: boolean; ollama: boolean }> {
   const providers = {
@@ -40,20 +45,28 @@ export async function getAvailableAIProviders(): Promise<{ openai: boolean; olla
   return providers;
 }
 
-export async function getAvailableTranscriptionProviders(): Promise<{ openai: boolean; gladia: boolean }> {
+export async function getAvailableTranscriptionProviders(): Promise<{ 
+  openai: boolean; 
+  gladia: boolean; 
+  huggingface: boolean; 
+}> {
   const providers = {
     openai: !!process.env.OPENAI_API_KEY,
-    gladia: true // Gladia is always available since we have the API key hardcoded
+    gladia: true, // Gladia is always available since we have the API key hardcoded
+    huggingface: true // Hugging Face is available (uses demo key by default)
   };
 
-  // Double-check Gladia connection if needed
+  // Check connections
   try {
-    const gladiaAvailable = await checkGladiaConnection();
+    const [gladiaAvailable, hfAvailable] = await Promise.all([
+      checkGladiaConnection(),
+      checkHuggingFaceConnection()
+    ]);
+    
     providers.gladia = gladiaAvailable;
+    providers.huggingface = hfAvailable;
   } catch (error) {
-    console.log('Gladia connection check failed:', error);
-    // Keep gladia as true since we have the API key
-    providers.gladia = true;
+    console.log('Provider connection checks failed:', error);
   }
 
   return providers;
@@ -65,30 +78,45 @@ export async function transcribeAudio(
 ): Promise<TranscriptionResult> {
   const availableProviders = await getAvailableTranscriptionProviders();
 
-  // Fallback logic: prefer Gladia if available, then OpenAI
+  // Fallback logic: prefer the requested provider, then fallback in order
+  if (provider === 'huggingface' && !availableProviders.huggingface) {
+    console.warn('Hugging Face not available, falling back to Gladia');
+    provider = 'gladia';
+  }
+  
   if (provider === 'gladia' && !availableProviders.gladia) {
     console.warn('Gladia not available, falling back to OpenAI');
     provider = 'openai';
   }
 
   if (provider === 'openai' && !availableProviders.openai) {
-    console.warn('OpenAI not available, falling back to Gladia');
-    provider = 'gladia';
+    console.warn('OpenAI not available, trying other providers');
+    if (availableProviders.huggingface) {
+      provider = 'huggingface';
+    } else if (availableProviders.gladia) {
+      provider = 'gladia';
+    }
   }
 
-  // If neither is available, throw error
-  if (!availableProviders.openai && !availableProviders.gladia) {
+  // If no providers are available, throw error
+  if (!availableProviders.openai && !availableProviders.gladia && !availableProviders.huggingface) {
     throw new Error('No transcription provider available');
   }
 
   switch (provider) {
+    case 'huggingface':
+      return transcribeAudioWithHuggingFace(audioFile);
     case 'gladia':
       return transcribeAudioWithGladia(audioFile);
     case 'openai':
     default:
       if (!availableProviders.openai) {
-        // Force use Gladia if OpenAI not available
-        return transcribeAudioWithGladia(audioFile);
+        // Force use best available provider
+        if (availableProviders.huggingface) {
+          return transcribeAudioWithHuggingFace(audioFile);
+        } else if (availableProviders.gladia) {
+          return transcribeAudioWithGladia(audioFile);
+        }
       }
       return transcribeWithOpenAI(audioFile);
   }
