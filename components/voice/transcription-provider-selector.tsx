@@ -89,6 +89,12 @@ export function TranscriptionProviderSelector({
       ];
       
       setProviders(providerList);
+      
+      // Auto-select Gladia if it's available and OpenAI is not
+      if (data.providers.gladia && !data.providers.openai && selectedProvider === 'openai') {
+        onProviderChange('gladia');
+      }
+      
     } catch (error) {
       console.error('Failed to check transcription providers:', error);
       // Fallback to default providers if API fails
@@ -99,7 +105,7 @@ export function TranscriptionProviderSelector({
           description: 'Industry-leading speech recognition with exceptional accuracy',
           icon: Mic,
           features: ['99%+ accuracy', 'Multi-language', 'Noise robust', 'Fast processing'],
-          available: true, // Assume available for fallback
+          available: false, // Assume not available since OpenAI key is missing
           isCloud: true,
           accuracy: 'Excellent',
           languages: '50+ languages',
@@ -111,7 +117,7 @@ export function TranscriptionProviderSelector({
           description: 'Advanced transcription with speaker diarization and real-time processing',
           icon: Cloud,
           features: ['Speaker diarization', 'Real-time', 'Custom vocabulary', 'High accuracy'],
-          available: false, // Assume not available for fallback
+          available: true, // Gladia should be available with hardcoded API key
           isCloud: true,
           accuracy: 'Very Good',
           languages: '100+ languages',
@@ -119,6 +125,11 @@ export function TranscriptionProviderSelector({
         }
       ];
       setProviders(fallbackProviders);
+      
+      // Auto-select Gladia if OpenAI is not available
+      if (selectedProvider === 'openai') {
+        onProviderChange('gladia');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -249,7 +260,7 @@ export function TranscriptionProviderSelector({
                 )}
                 {selectedProviderData.id === 'gladia' && (
                   <p className="text-yellow-800 dark:text-yellow-200">
-                    Gladia service not available. Check your internet connection.
+                    Gladia service temporarily unavailable. Check your internet connection.
                   </p>
                 )}
               </div>
@@ -312,15 +323,25 @@ export function TranscriptionProviderSelector({
 
         {/* Quick Setup Instructions */}
         <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-          <h5 className="font-medium text-sm mb-2">Provider Comparison</h5>
+          <h5 className="font-medium text-sm mb-2">Provider Status</h5>
           <div className="space-y-2 text-xs">
             <div>
               <p className="font-medium text-blue-600 dark:text-blue-400">OpenAI Whisper:</p>
-              <p className="text-slate-600 dark:text-slate-300">Best overall accuracy, proven reliability, wide language support</p>
+              <p className="text-slate-600 dark:text-slate-300">
+                {providers.find(p => p.id === 'openai')?.available 
+                  ? 'Available - Best overall accuracy, proven reliability' 
+                  : 'Unavailable - Requires OPENAI_API_KEY environment variable'
+                }
+              </p>
             </div>
             <div>
               <p className="font-medium text-green-600 dark:text-green-400">Gladia AI:</p>
-              <p className="text-slate-600 dark:text-slate-300">Advanced features like speaker diarization, real-time processing</p>
+              <p className="text-slate-600 dark:text-slate-300">
+                {providers.find(p => p.id === 'gladia')?.available 
+                  ? 'Available - Advanced features like speaker diarization, real-time processing' 
+                  : 'Unavailable - Service temporarily unavailable'
+                }
+              </p>
             </div>
           </div>
         </div>

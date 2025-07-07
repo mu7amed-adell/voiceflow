@@ -12,7 +12,7 @@ export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
       selectedProvider: 'openai', // Default AI provider
-      selectedTranscriptionProvider: 'openai', // Default transcription provider
+      selectedTranscriptionProvider: 'gladia', // Default to Gladia since it's available
       setSelectedProvider: (provider) => set({ selectedProvider: provider }),
       setSelectedTranscriptionProvider: (provider) => set({ selectedTranscriptionProvider: provider }),
     }),

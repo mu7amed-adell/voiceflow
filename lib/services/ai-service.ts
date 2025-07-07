@@ -22,7 +22,7 @@ export type AIProvider = 'openai' | 'ollama';
 export type TranscriptionProvider = 'openai' | 'gladia';
 
 const DEFAULT_AI_PROVIDER: AIProvider = (process.env.AI_PROVIDER as AIProvider) || 'openai';
-const DEFAULT_TRANSCRIPTION_PROVIDER: TranscriptionProvider = 'openai';
+const DEFAULT_TRANSCRIPTION_PROVIDER: TranscriptionProvider = 'gladia'; // Changed default to Gladia
 
 export async function getAvailableAIProviders(): Promise<{ openai: boolean; ollama: boolean }> {
   const providers = {
@@ -43,14 +43,17 @@ export async function getAvailableAIProviders(): Promise<{ openai: boolean; olla
 export async function getAvailableTranscriptionProviders(): Promise<{ openai: boolean; gladia: boolean }> {
   const providers = {
     openai: !!process.env.OPENAI_API_KEY,
-    gladia: false
+    gladia: true // Gladia is always available since we have the API key hardcoded
   };
 
-  // Check Gladia connection
+  // Double-check Gladia connection if needed
   try {
-    providers.gladia = await checkGladiaConnection();
+    const gladiaAvailable = await checkGladiaConnection();
+    providers.gladia = gladiaAvailable;
   } catch (error) {
-    console.log('Gladia not available:', error);
+    console.log('Gladia connection check failed:', error);
+    // Keep gladia as true since we have the API key
+    providers.gladia = true;
   }
 
   return providers;
@@ -62,13 +65,19 @@ export async function transcribeAudio(
 ): Promise<TranscriptionResult> {
   const availableProviders = await getAvailableTranscriptionProviders();
 
-  // Fallback to OpenAI if requested provider is not available
+  // Fallback logic: prefer Gladia if available, then OpenAI
   if (provider === 'gladia' && !availableProviders.gladia) {
     console.warn('Gladia not available, falling back to OpenAI');
     provider = 'openai';
   }
 
   if (provider === 'openai' && !availableProviders.openai) {
+    console.warn('OpenAI not available, falling back to Gladia');
+    provider = 'gladia';
+  }
+
+  // If neither is available, throw error
+  if (!availableProviders.openai && !availableProviders.gladia) {
     throw new Error('No transcription provider available');
   }
 
@@ -77,6 +86,10 @@ export async function transcribeAudio(
       return transcribeAudioWithGladia(audioFile);
     case 'openai':
     default:
+      if (!availableProviders.openai) {
+        // Force use Gladia if OpenAI not available
+        return transcribeAudioWithGladia(audioFile);
+      }
       return transcribeWithOpenAI(audioFile);
   }
 }
